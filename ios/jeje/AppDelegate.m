@@ -1,4 +1,7 @@
+#import <Firebase.h>
 #import "AppDelegate.h"
+#import "RNFBMessagingModule.h"
+// #import <CodePush/CodePush.h>
 
 #import <React/RCTBridge.h>
 #import <React/RCTBundleURLProvider.h>
@@ -29,9 +32,18 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+  //firebase setting\/
+  [FIRApp configure];
+  NSDictionary *appProperties = [RNFBMessagingModule addCustomPropsToUserProps:nil withLaunchOptions:launchOptions];
+  //firebase setting/
   RCTAppSetupPrepareApp(application);
 
   RCTBridge *bridge = [[RCTBridge alloc] initWithDelegate:self launchOptions:launchOptions];
+  // Find the `RCTRootView` instance and update the `initialProperties` with your `appProperties` instance
+  // UIView *rootView = RCTAppSetupDefaultRootView(bridge, @"jeje", nil);
+  RCTRootView *rootView = [[RCTRootView alloc] initWithBridge:bridge
+                                             moduleName:@"jeje"
+                                             initialProperties:appProperties];
 
 #if RCT_NEW_ARCH_ENABLED
   _contextContainer = std::make_shared<facebook::react::ContextContainer const>();
@@ -40,8 +52,6 @@
   _bridgeAdapter = [[RCTSurfacePresenterBridgeAdapter alloc] initWithBridge:bridge contextContainer:_contextContainer];
   bridge.surfacePresenter = _bridgeAdapter.surfacePresenter;
 #endif
-
-  UIView *rootView = RCTAppSetupDefaultRootView(bridge, @"jeje", nil);
 
   if (@available(iOS 13.0, *)) {
     rootView.backgroundColor = [UIColor systemBackgroundColor];
@@ -63,6 +73,7 @@
   return [[RCTBundleURLProvider sharedSettings] jsBundleURLForBundleRoot:@"index"];
 #else
   return [[NSBundle mainBundle] URLForResource:@"main" withExtension:@"jsbundle"];
+  // return [CodePush bundleURL];
 #endif
 }
 

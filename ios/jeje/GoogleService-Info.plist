@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>546197955930-srdg51cjfg6ct4qqb9lrnu0dclkqcdjc.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.546197955930-srdg51cjfg6ct4qqb9lrnu0dclkqcdjc</string>
+	<key>API_KEY</key>
+	<string>AIzaSyDGT2pmy0xIUHsciUxVqMvQfvaiOAnAMug</string>
+	<key>GCM_SENDER_ID</key>
+	<string>546197955930</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>app.jeje</string>
+	<key>PROJECT_ID</key>
+	<string>jejeapp</string>
+	<key>STORAGE_BUCKET</key>
+	<string>jejeapp.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:546197955930:ios:2ff34e6073b9d5ebd8bf63</string>
+</dict>
+</plist>

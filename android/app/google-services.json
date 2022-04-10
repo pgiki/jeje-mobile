@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "546197955930",
+    "project_id": "jejeapp",
+    "storage_bucket": "jejeapp.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:546197955930:android:1733ff0954bb7bced8bf63",
+        "android_client_info": {
+          "package_name": "app.jeje"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "546197955930-oeot3efh26rvgrnuaik5fd7msc6npkrt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDp-jvPx0af0gjhMh9vbqnXkzyGh_qXsEM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "546197955930-oeot3efh26rvgrnuaik5fd7msc6npkrt.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "546197955930-srdg51cjfg6ct4qqb9lrnu0dclkqcdjc.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "app.jeje"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
