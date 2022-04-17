@@ -18,7 +18,8 @@ import com.facebook.react.bridge.JSIModuleSpec; // jsi
 import com.facebook.react.bridge.JSIModulePackage; // jsi
 import com.facebook.react.bridge.ReactApplicationContext; // jsi
 import com.facebook.react.bridge.JavaScriptContextHolder; // jsi
-import com.nozbe.watermelondb.jsi.WatermelonDBJSIPackage; // jsi
+// import com.nozbe.watermelondb.jsi.WatermelonDBJSIPackage; // jsi
+import com.swmansion.reanimated.ReanimatedJSIModulePackage; // <- add
 
 public class MainApplication extends Application implements ReactApplication {
 
@@ -53,7 +54,7 @@ public class MainApplication extends Application implements ReactApplication {
             final JavaScriptContextHolder jsContext
           ) {
             List<JSIModuleSpec> modules = Arrays.asList();
-            modules.addAll(new WatermelonDBJSIPackage().getJSIModules(reactApplicationContext, jsContext)); // ⬅️ This!
+            modules.addAll(new ReanimatedJSIModulePackage;().getJSIModules(reactApplicationContext, jsContext)); // ⬅️ This!
             // ⬅️ add more JSI packages here by conventions above
             return modules;
             }

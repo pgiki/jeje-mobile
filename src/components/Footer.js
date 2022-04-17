@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { BottomNavigation, Text } from 'react-native-paper';
+import {View} from "react-native"
 
 const MusicRoute = () => <Text>Music</Text>;
 
@@ -21,11 +22,12 @@ export function Footer(props){
     recents: RecentsRoute,
   });
 
-  return (
+  return (<View style={{height:55}}>
     <BottomNavigation
       navigationState={{ index, routes }}
       onIndexChange={setIndex}
       renderScene={renderScene}
     />
+    </View>
   );
 };

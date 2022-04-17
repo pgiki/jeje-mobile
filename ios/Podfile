@@ -34,4 +34,12 @@ target 'jeje' do
     react_native_post_install(installer)
     __apply_Xcode_12_5_M1_post_install_workaround(installer)
   end
+  pod 'React-RCTText', :path => '../node_modules/react-native/Libraries/Text', :modular_headers => true
+
+  permissions_path = '../node_modules/react-native-permissions/ios'
+  pod 'Permission-AppTrackingTransparency', :path => "#{permissions_path}/AppTrackingTransparency"
+  pod 'Permission-Camera', :path => "#{permissions_path}/Camera"
+  pod 'Permission-PhotoLibrary', :path => "#{permissions_path}/PhotoLibrary"
+  pod 'Permission-Notifications', :path => "#{permissions_path}/Notifications"
+
 end
