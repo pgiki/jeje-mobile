@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { TouchableOpacity, StyleSheet, View, Platform, Keyboard } from 'react-native';
 import { Text, Icon, Overlay, ListItem, SearchBar } from 'react-native-elements';
 import { TextInput } from 'react-native-paper';
-import { useNavigation } from '@react-navigation/native';
 import { colors, utils, font, DEBUG, requests, height, width } from 'src/helpers';
 import FastImage from 'react-native-fast-image';
 import TextInputMask from 'react-native-text-input-mask';
@@ -13,35 +12,62 @@ import { Button } from './index';
 import _ from 'lodash'
 
 export function DropdownInput(props) {
-  const { url, resultsField = 'results' } = props;
-  const [data, setData] = useState(props.data || [])
-  const [isFocus, setIsFocus] = useState(false)
-  const [searchText, setSearchText] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedItems, setSelectedItems] = useState([])
-  const loggedUser = utils.getUser();
   const {
+    url,
+    resultsField = 'results',
+    value,
     placeholder,
     labelField = "name",
     valueField = "id",
+    getLabel = (_item) => utils.getObject(_item, labelField),
     onChangeText = (v) => null,
     many = false,
+    canCreate = true,
   } = props;
 
-  async function fetchData() {
-    const res = await requests.get(url + `?search=${searchText}`)
-    setData(res[resultsField])
-  }
+  const [data, setData] = useState(props.data || [])
+  const [isFocus, setIsFocus] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedItems, setSelectedItems] = useState(value ? (Array.isArray(value) ? value : [value]) : [])
+  const loggedUser = utils.getUser();
 
   useEffect(() => {
     url && fetchData()
   }, [url, searchText])
 
   useEffect(() => {
-    props.data && setData(props.data || [])
+    if (props.value && !_.isEqual(props.value, selectedItems)) {
+      setSelectedItems(Array.isArray(props.value) ? props.value : [props.value])
+    }
+  }, [props.value])
+
+  useEffect(() => {
+    props.data && !_.isEqual(props.data, data) && setData(props.data || [])
   }, [props.data])
 
+  useEffect(() => {
+    if (many) {
+      onChangeText(selectedItems)
+    } else {
+      onChangeText(selectedItems[0])
+    }
+  }, [selectedItems])
+
+  useEffect(() => {
+    // clear search text when hiding the modal
+    if (!isModalVisible) {
+      setSearchText('')
+    }
+  }, [isModalVisible])
+
+
+  async function fetchData() {
+    const res = await requests.get(url + `?search=${searchText}`)
+    const results = res[resultsField]
+    setData(results)
+  }
   async function onCreate() {
     setLoading(true)
     const res = await requests.post(url, {
@@ -51,14 +77,15 @@ export function DropdownInput(props) {
     await fetchData();
     onChange(res);
     setLoading(false);
+    setIsModalVisible(false);
   }
 
   const onChange = selectedItem => {
     if (many) {
-      const isChecked = selectedItems.map(item=>item.id).includes(selectedItem.id)
-      if(isChecked){
-        setSelectedItems(selectedItems.filter(item=>item.id!==selectedItem.id))
-      }else{
+      const isChecked = selectedItems.map(item => item.id).includes(selectedItem.id)
+      if (isChecked) {
+        setSelectedItems(selectedItems.filter(item => item.id !== selectedItem.id))
+      } else {
         setSelectedItems([...selectedItems, selectedItem])
       }
     } else {
@@ -67,89 +94,85 @@ export function DropdownInput(props) {
     setIsFocus(false);
   }
 
-  useEffect(()=>{
-     if(many){
-      onChangeText(selectedItems)
-     }else{
-      onChangeText(selectedItems[0])
-     }
-  }, [selectedItems])
-  
   const toggleModal = () => {
     setIsModalVisible(!isModalVisible)
   }
 
-  function onFocus(){
-    if(!isModalVisible && isModalVisible !==true){
+  function onFocus() {
+    if (!isModalVisible && isModalVisible !== true) {
       setIsModalVisible(true);
       setIsFocus(true);
     }
     Keyboard.dismiss()
   }
-  function onBlur(){
-    if(!isModalVisible && isModalVisible !==false){
+  function onBlur() {
+    if (!isModalVisible && isModalVisible !== false) {
       setIsModalVisible(false);
       setIsFocus(false);
     }
-    
   }
 
   return <View>
-    <TextInput 
+    <TextInput
       {...props}
       keyboardType={undefined}
-      value={selectedItems.map(item=>utils.getObject(item, labelField)).join(",")}
+      value={selectedItems.map(getLabel).join(", ")}
       style={style.inputStyle}
       onFocus={onFocus}
       onBlur={onBlur}
     />
     <Overlay
-        isVisible={isModalVisible}
-        overlayStyle={{width, height:0.8*height, 
-          marginTop:100, borderTopRightRadius: 20,
-          borderTopLeftRadius: 20
-        }}
-        onBackdropPress={toggleModal}
-      >
-        <View>
-          <SearchBar
-            platform={'android'}
-            placeholder={placeholder || 'Search...'}
-            onChangeText={text => setSearchText(text)}
-            value={searchText}
-            containerStyle={style.countrySearch}
-            //TODO: find a way to add them to the them
-            searchIcon={{ name: 'search', type: 'evilicon' }}
-            clearIcon={{ name: 'close', type: 'evilicon' }}
-            cancelIcon={{ name: 'undo', type: 'evilicon', size: 30 }}
-          />
-        </View>
-        <FlatList
-          data={data}
-          keyExtractor={utils.keyExtractor}
-          renderItem={({ item, index }) => {
-          const isChecked = selectedItems.map(item=>item.id).includes(item.id)
+      isVisible={isModalVisible}
+      overlayStyle={style.dropdownOverlay}
+      onBackdropPress={toggleModal}
+    >
+      <View>
+        <TouchableOpacity
+          style={{ position: 'absolute', top: -5, right: 0, zIndex: 99 }}
+          onPress={() => setIsModalVisible(false)}>
+          <Icon name='close-o' type='evilicon' size={35} color={colors.grey} />
+        </TouchableOpacity>
+        <SearchBar
+          platform={'android'}
+          placeholder={placeholder || 'Search...'}
+          onChangeText={text => setSearchText(text)}
+          value={searchText}
+          containerStyle={style.countrySearch}
+          //TODO: find a way to add them to the them
+          searchIcon={{ name: 'search', type: 'evilicon' }}
+          clearIcon={{ name: 'close', type: 'evilicon' }}
+          cancelIcon={{ name: 'undo', type: 'evilicon', size: 30 }}
+        />
+      </View>
+      <FlatList
+        data={data}
+        keyExtractor={utils.keyExtractor}
+        renderItem={({ item, index }) => {
+          const isChecked = selectedItems.map(item => item.id).includes(item.id)
           return (<ListItem
             onPress={() => {
               onChange(item);
-              // setSearchText(item.name)
-              setIsModalVisible(false);
+              !many && setIsModalVisible(false);
             }}
             bottomDivider
           >
             <ListItem.Content>
-              <ListItem.Title style={{color: isChecked?colors.primary: colors.black}}>{utils.getObject(item, labelField)}</ListItem.Title>
+              <ListItem.Title style={{ color: isChecked ? colors.primary : colors.black }}>
+                {getLabel(item)}
+              </ListItem.Title>
               {/* <ListItem.Subtitle>{item.cc}</ListItem.Subtitle> */}
             </ListItem.Content>
             {isChecked && <Icon name="check" type='antdesign' color={colors.primary} />}
           </ListItem>)
         }}
-          ListFooterComponent={!!searchText?<Button 
-            title={`Create: ${searchText}`} 
-            onPress={onCreate}
-            />:undefined}
-        />
-      </Overlay>
+        ListFooterComponent={(!!searchText && canCreate) ? <Button
+          title={`Create: ${searchText}`}
+          loading={loading}
+          onPress={onCreate}
+          labelStyle={style.buttonLabelText}
+        /> : undefined}
+      />
+    </Overlay>
   </View>
 
 }
@@ -182,17 +205,14 @@ export function CurrencyOptionsInput(props) {
 
   return (
     <View style={[style.currencyInputContainer, containerStyle]}>
-      <ListItem
-        onPress={toggleModal}
-      >
+      <ListItem onPress={toggleModal}>
         <Text>{country?.symbol}</Text>
         <ListItem.Content>
-          {!!label && <Text style={style.label}>{label}</Text>}
+          {!!label && <ListItem.Title>{label}</ListItem.Title>}
           <ListItem.Subtitle>{value || props.placeholder}</ListItem.Subtitle>
         </ListItem.Content>
         <ListItem.Chevron />
       </ListItem>
-
       {!!errorMessage && <Text style={style.errorMessage}>{errorMessage}</Text>}
       <Overlay
         isVisible={isModalVisible}
@@ -229,7 +249,6 @@ export function CurrencyOptionsInput(props) {
               <ListItem.Title>{item.name}</ListItem.Title>
               <ListItem.Subtitle>{item.cc}</ListItem.Subtitle>
             </ListItem.Content>
-
           </ListItem>}
         />
       </Overlay>
@@ -525,11 +544,15 @@ const style = StyleSheet.create({
     marginVertical: 10,
     marginHorizontal: 5,
     color: colors.black,
-    backgroundColor:colors.primary2,
+    backgroundColor: colors.primary2,
     // saspaddingVertical: 5,
     // textAlign:'center'
   },
-  currencyInputContainer: { flex: 1, paddingTop: 10 },
+  currencyInputContainer: {
+    flex: 1,
+    // width: width,
+    paddingTop: 10,
+  },
   mh12: { marginHorizontal: 12 },
   greyText: { color: colors.grey4 },
   label: {
@@ -603,5 +626,15 @@ const style = StyleSheet.create({
   inputSearchStyle: {
     height: 40,
     fontSize: 16,
+  },
+  buttonLabelText: {
+    color: colors.white,
+  },
+  dropdownOverlay: {
+    width,
+    height: 0.8 * height,
+    marginTop: 150,
+    borderTopRightRadius: 20,
+    borderTopLeftRadius: 20
   },
 });

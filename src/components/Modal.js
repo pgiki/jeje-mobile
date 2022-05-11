@@ -48,7 +48,7 @@ export default function Modal(props) {
       modalStyle={[s.content__modal, props.containerStyle || {}]}
       snapPoint={snapPoint}
       modalHeight={modalHeight}
-      threshold={height*0.5}
+      threshold={height * 0.5}
       velocity={4000}
       flatListProps={{
         data: [props.children],
@@ -84,12 +84,14 @@ const s = StyleSheet.create({
     shadowOpacity: 0.45,
     shadowRadius: 16,
     flex: 1,
+    // padding: 10,
     // maxWidth:width,
   },
   content__subheading: {
     marginBottom: 2,
-    fontSize: 16,
-    paddingLeft: 10,
+    fontSize: 18,
+    textAlign: 'center',
+    // paddingLeft: 10,
     fontWeight: '600',
     color: '#ccc',
     flex: 1,

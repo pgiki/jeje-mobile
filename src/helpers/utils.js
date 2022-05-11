@@ -107,7 +107,7 @@ class Actions {
 
   // analytics
   logEvent = async (content_type, data) => {
-    if (DEBUG||true) {
+    if (DEBUG || true) {
       return new Promise(resolve =>
         console.log(`logEvent: ${content_type}=>${JSON.stringify(data)}`)
       );
@@ -387,6 +387,14 @@ class Actions {
     const parsedValue = `${s}`?.replaceAll(',', '').match(/\d+\.?\d*/g)?.join('');
     return (parsedValue && parse) ? parse(parsedValue) : parsedValue;
   };
+
+  parse = (v) => {
+    try {
+      return JSON.parse(v)
+    } catch (error) {
+      return v
+    }
+  }
 
   isNumeric = s => {
     //to simplify checking for phone number remove the leading +

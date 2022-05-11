@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import Budgets from 'src/screens/Budgets';
+import BudgetsAdd from 'src/screens/Budgets/Add';
 import { utils } from 'src/helpers';
 const Stack = createStackNavigator();
 
@@ -17,6 +18,13 @@ export function BudgetsStack() {
           component={Budgets}
           options={({ route, navigation }) => ({
             title: 'Budgets',
+          })}
+        />
+        <Stack.Screen
+          name="Budgets/Add"
+          component={BudgetsAdd}
+          options={({ route, navigation }) => ({
+            title: 'Budget',
           })}
         />
       </Stack.Group>

@@ -26,27 +26,33 @@ import { useRecoilState } from 'recoil';
 export default function Attachments(props) {
   const {
     navigation,
-    route: { params: { canSelect = true, isSameUser = true, title = 'Documents', searchText: _searchText = '', extraQuery = {} } },
+    route: {
+      params: {
+        canSelect = false,
+        isSameUser = true,
+        title = 'Documents',
+        searchText: _searchText = '',
+        itemType = 'transaction',
+        itemId,
+        extraQuery = {}
+      } },
   } = props;
-  const itemType = 'Attachment';
   const [searchText, setSearchText] = useState(_searchText);
-  const [startURL, setStartURL] = useState(url[itemType]);
+  const baseURL = utils.getObject(url, 'spendi.Attachment')
+  const [startURL, setStartURL] = useState(baseURL);
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedAttachments, setSelectedAttachments] = useRecoilState(selectedAttachmentsState);
   const [selectedIds, setSelectedIds] = useState([]);
   const isSelectedAdded = selectedIds.includes(selectedItem?.id);
   const [progress, setProgress] = useState(0);
-
-  const [modal, setModal] = useState({
-    visible: false,
-  });
+  const [modal, setModal] = useState({ visible: false });
+  const [fileUploadVisible, setFileUploadVisible] = useState(false);
 
   useEffect(() => {
     setSearchText(_searchText);
   }, [_searchText]);
 
   useEffect(() => {
-    // get item ids
     canSelect && setSelectedIds(selectedAttachments.map(s => s.id));
   }, [selectedAttachments]);
 
@@ -59,15 +65,14 @@ export default function Attachments(props) {
   function onFocusScreen() {
     // update the start url everytime user focuses the screen
     setStartURL(utils.stringify({
-      ...extraQuery, search:
-        searchText,
+      ...extraQuery,
+      search: searchText,
       request_id: new Date().getTime(),
-    }, { baseURL: url[itemType] }));
+    }, { baseURL }));
   }
 
-
   useEffect(() => {
-    setStartURL(utils.stringify({ ...extraQuery, search: searchText }, { baseURL: url[itemType] }));
+    setStartURL(utils.stringify({ ...extraQuery, search: searchText }, { baseURL }));
   }, [extraQuery, searchText]);
 
   useEffect(() => {
@@ -95,8 +100,6 @@ export default function Attachments(props) {
 
   function onSubmit() {
     navigation.goBack();
-    // const params = props.route.params
-    // return navigation.navigate(params.name, {...params.params, organizationId: selectedItem.id, updateId: new Date().getTime()})
   }
 
   function addSelectedItem(item: any) {
@@ -110,8 +113,24 @@ export default function Attachments(props) {
   }
 
   function addAttachment() {
-    navigation.navigate('Attachments/Add');
+    setFileUploadVisible(true)
   }
+
+  function pickAttachment(requestType) {
+    setFileUploadVisible(false);
+    // if (requestType !== 'camera') {
+    navigation.navigate('Attachments/Add', { itemType, itemId, requestType });
+    // } else {
+    //   navigation.navigate('Camera', {
+    //     nextScene: {
+    //       sceneName: 'Attachments/Add',
+    //       params: { itemType, itemId, requestType }
+    //     }
+    //   })
+    // }
+  }
+
+
   function toggleItemSelection(item) {
     isSelectedAdded ? removeFromSelected(item) : addSelectedItem(item);
   }
@@ -139,7 +158,6 @@ export default function Attachments(props) {
       .then((res) => {
         res.session(session);
         const path = Platform.OS === 'android' ? 'file://' + res.path() : '' + res.path();
-        console.log(path);
         FileViewer.open(path);
       })
       .catch((err) => {
@@ -147,7 +165,6 @@ export default function Attachments(props) {
       }).finally(() => setProgress(0));
     // clear caches when user quit the app
     // RNFetchBlob.session(session).dispose()
-
   }
 
   function renderItem({ item = {}, imageStyle = {}, disabled = false, checkBoxSize = 14 } = {}) {
@@ -190,9 +207,9 @@ export default function Attachments(props) {
       <Text numberOfLines={1}>{item.name}</Text>
       {canSelect && <View style={style.checkBoxItemList}>
         <TouchableOpacity onPress={() => toggleItemSelection(item)}>
-          <Icon name={`checksquare${isSelected ? '' : 'o'}`} type="antdesign" size={checkBoxSize} 
-          color={isSelected?colors.primary:colors.black}
-           />
+          <Icon name={`checksquare${isSelected ? '' : 'o'}`} type="antdesign" size={checkBoxSize}
+            color={isSelected ? colors.primary : colors.black}
+          />
         </TouchableOpacity>
       </View>}
     </TouchableOpacity>);
@@ -222,18 +239,10 @@ export default function Attachments(props) {
           <Text style={style.emptyListText}>{
             !searchText ?
               (!isSameUser ?
-                'This user has not shared any documents with you yet. Note that you lose access to the shared documents when the borrower pays their loan fully'
-                : 'You currently do not have any documents. Documents such as driving license and identification cards, which some lenders will require for loan applications, will appear here.') :
+                'This user has not shared any documents with you yet'
+                : 'You currently do not have any documents') :
               'No documents match  your query'
           }</Text>
-
-          {isSameUser && <Button
-            icon={{ type: 'entypo', name: 'plus' }}
-            title="Upload Document"
-            onPress={addAttachment}
-            type="outline"
-            containerStyle={{ alignSelf: 'center' }}
-          />}
         </View>}
       />
 
@@ -261,22 +270,38 @@ export default function Attachments(props) {
         </View>
       </Modal>
 
+      <Modal
+        visible={fileUploadVisible}
+        title={'Upload File'}
+        openType={'top'}
+        modalHeight={0.22 * height}
+        extraProps={{
+          onClosed: () => setFileUploadVisible(false)
+        }}
+      >
+        <View style={style.uploadActions}>
+          <TouchableOpacity onPress={() => pickAttachment('camera')}>
+            <Icon name='camera' type='feather' color={colors.primary} />
+            <Text style={style.uploadActionText}>Camera</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => pickAttachment('browse')}>
+            <Icon name='file' type='feather' color={colors.primary} />
+            <Text style={style.uploadActionText}>Upload</Text>
+          </TouchableOpacity>
+
+        </View>
+
+      </Modal>
+
       {selectedIds.length > 0 && canSelect && <View style={style.bottomMenu}>
-
-        {/* <View style={style.flex1}>
-        <Icon name='trash' type='entypo' size={14}/>
-        <Text style={style.bottomMenuText}>Delete</Text>
-        </View> */}
-
-        <TouchableOpacity style={{flex:1, flexDirection:'row', justifyContent:'space-around'}}
+        <TouchableOpacity style={style.shareButton}
           onPress={onSubmit}
         >
           <Icon name="share" type="entypo" size={22} color={colors.white} />
           <Text style={style.bottomMenuText}>Share</Text>
         </TouchableOpacity>
-
       </View>}
-
       {isSameUser && <TouchableOpacity style={style.fixedButton}
         onPress={addAttachment}
       >
@@ -295,6 +320,11 @@ const style = StyleSheet.create({
     flex: 1,
     paddingBottom: 0.1 * height,
   },
+  shareButton: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-around'
+  },
   flex1: { flex: 1 },
   itemContainer: {
     flex: 1,
@@ -312,7 +342,7 @@ const style = StyleSheet.create({
     textAlign: 'center',
     color: colors.white,
     fontSize: 16,
-    fontWeight:'500'
+    fontWeight: '500'
   },
   mr10: {
     marginRight: 10,
@@ -377,13 +407,11 @@ const style = StyleSheet.create({
   listContainer: {
     margin: 4,
     borderRadius: 20,
-    // flex: 1,
-    minHeight: 0.9 * height,
     paddingBottom: 80,
   },
   emptyList: {
     padding: 10,
-    paddingTop: 30,
+    paddingTop: 0.2 * height,
     flex: 1,
   },
   emptyListText: {
@@ -399,5 +427,14 @@ const style = StyleSheet.create({
   downloadThumb: { height: 5, width: 5, backgroundColor: 'blue' },
   downloadProgressText: { fontSize: 10 },
   //fixed button
+  uploadActions: {
+    paddingTop: 30, flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 0.2 * width,
+  },
+  uploadActionText: {
+    fontStyle: 'italic',
+    paddingTop: 10
+  }
 
 });

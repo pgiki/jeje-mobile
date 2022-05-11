@@ -10,24 +10,30 @@ import RNFetchBlob from 'rn-fetch-blob'
 import { colors, width, requests, url, utils, DEBUG } from 'src/helpers';
 import uploadingGIF from 'src/assets/uploading.gif';
 import Input from 'src/components/Input'
+import { selectedFileState } from 'src/atoms';
+import { useRecoilState } from 'recoil';
 
 export default function AttachmentsAdd(props) {
-    const { navigation } = props;
+    const {
+        navigation,
+        route: {
+            params: {
+                itemType = 'transaction',
+                itemId,
+                requestType = 'browse'
+            }
+        },
+    } = props;
+    const baseURL = url.spendi.Attachment;
     const [cameraStatus, setCameraStatus] = useState(undefined);
-    const [file, setFile] = useState()
-    const [categories, setCategories] = useState([])
-    const [selectedCategory, setSelectedCategory] = useState();
+    const [file, setFile] = useRecoilState(selectedFileState)
     const [name, setName] = useState('')
     const [nameError, setNameError] = useState()
     const [loading, setLoading] = useState(false);
     const [progress, setProgress] = useState(0);
     const [isFocus, setIsFocus] = useState(false);
-    const loggedUser = utils.getUser()
+    const loggedUser = utils.getUser();
 
-    async function getcategories() {
-        const res = await requests.get(url.AttachmentCategory)
-        setCategories(res.results)
-    }
     const handleFilePickerError = (err: unknown) => {
         if (DocumentPicker.isCancel(err)) {
             DEBUG && console.warn('cancelled')
@@ -60,10 +66,20 @@ export default function AttachmentsAdd(props) {
         }
     }
 
+
     useEffect(() => {
-        getcategories();
-        requestCamera();
-    }, [])
+        if (requestType === 'camera') {
+            if (!file) {
+                if (cameraStatus === RESULTS.GRANTED) {
+                    uploadFile(requestType)
+                } else {
+                    requestCamera();
+                }
+            }
+        } else {
+            uploadFile(requestType)
+        }
+    }, [requestType, cameraStatus])
 
     useEffect(() => {
         navigation.setOptions({
@@ -75,22 +91,11 @@ export default function AttachmentsAdd(props) {
 
     const uploadFile = useCallback((type = "camera") => {
         if (type === 'camera') {
-            launchCamera({
-                saveToPhotos: false,
-                mediaType: 'photo'
-            }, (res) => {
-                if (res.errorCode) {
-                    Alert.alert("Camera Error", res.errorCode)
-                } else if (res.assets) {
-                    const f = res.assets[0] || {};
-                    setFile({ ...f, name: f.fileName });
-                }
-            });
+            navigation.navigate('Camera')
         } else {
             DocumentPicker.pick({
                 type: [types.doc, types.docx, types.pdf, types.images],
             }).then(res => {
-                //   [{"fileCopyUri": null, "name": "Screenshot_2022-03-18-10-03-50-334_app.niwezeshe.jpg", "size": 127614, "type": "image/jpeg", "uri": "content://com.android.providers.media.documents/document/image%3A445"}]
                 setFile(res[0]);
             })
                 .catch(handleFilePickerError)
@@ -98,26 +103,20 @@ export default function AttachmentsAdd(props) {
     }, []);
 
     async function onSubmit() {
-        if (!name || !selectedCategory) {
+        if (!name) {
             setNameError('The name is required')
-            if (!selectedCategory) {
-                Alert.alert("Documentary Category Error", "Please select the category of the document first")
-            }
             return;
         } else {
             setNameError('')
         }
-
         try {
             setLoading(true);
-
             const uri = Platform.select({
                 ios: file.uri.replace("file://", ""),
                 default: file.uri,
             })
-            const resp = await RNFetchBlob.fetch('POST', url.BASE_URL + url.Attachment, {
+            const resp = await RNFetchBlob.fetch('POST', url.BASE_URL + baseURL, {
                 "Authorization": `Token ${loggedUser?.token}`,
-                // otherHeader : "foo",
                 'Content-Type': 'multipart/form-data',
             }, [
                 // element with property `filename` will be transformed into `file` in form data
@@ -125,31 +124,32 @@ export default function AttachmentsAdd(props) {
                 // elements without property `filename` will be sent as plain text
                 { name: 'name', data: name },
                 { name: 'user', data: loggedUser?.id?.toString() },
-                { name: 'attachment_category', data: selectedCategory?.id?.toString() },
+                { name: itemType, data: itemId?.toString() },
             ]).uploadProgress((written, total) => {
                 setProgress(written / total)
             })
-
             const res = JSON.parse(resp.data)
             if (res.id) {
                 //hack to make sure all other data are submitted
-                await requests.patch(url.Attachment + res.id + "/", { user: loggedUser?.id, attachment_category: selectedCategory?.id })
-                Alert.alert("Uploaded", "Your file was uploaded successfuly")
+                await requests.patch(baseURL + res.id + "/", {
+                    user: loggedUser?.id,
+                    [itemType]: itemId
+                });
+                Alert.alert("Uploaded", "Your file was uploaded successfuly");
                 setLoading(false);
-                navigation.goBack()
+                navigation.goBack();
             } else {
-                Alert.alert("Upload Failed", resp.data)
+                Alert.alert("Upload Failed", resp.data);
             }
         } catch (error) {
             setLoading(false);
-            Alert.alert("File Upload Error", error.message)
+            Alert.alert("File Upload Error", error.message);
         }
     }
     const isCameraOK = cameraStatus === RESULTS.GRANTED;
-
     return <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={style.root}>
         <ScrollView>
-            {!isCameraOK &&
+            {!isCameraOK && !file &&
                 <View style={style.mv100}>
                     <Text>
                         Camera permission is required to be able to upload documents. Current permissions is {cameraStatus?.toUpperCase()}
@@ -160,25 +160,29 @@ export default function AttachmentsAdd(props) {
                         containerStyle={style.mv100}
                     />
                 </View>}
-            {isCameraOK &&
+            {(isCameraOK || !!file) &&
                 <View>
                     {!file ?
                         <View>
                             <View style={style.uploadInfoContainer}>
-                                <Icon name='upload' type='antdesign' size={90} />
+                                <Icon
+                                    name='upload'
+                                    type='antdesign'
+                                    size={90}
+                                    color={colors.primary} />
                                 <Text style={style.uploadInfoText}>
-                                    Upload a document which is clearly visible. These documents are private and only visible to people you choose to share with.
+                                    These documents are private and only visible to people you choose to share with.
                                 </Text>
                             </View>
                             <View style={style.cameraActionButtons}>
-                                <Button
-                                    title={'Camera'}
+                                <Button title={"Camera"}
                                     buttonStyle={style.choosePickerButton}
                                     onPress={() => uploadFile('camera')}
-                                    icon={{ name: "camera", type: "entypo", color: colors.black, size: 16 }}
+                                    icon={{ name: "camera", type: "feather", color: colors.black, size: 16 }}
                                     type='outline'
                                     titleStyle={style.font14}
                                 />
+
                                 <Button title={"Documents"}
                                     buttonStyle={style.choosePickerButton}
                                     onPress={() => uploadFile('browse')}
@@ -195,23 +199,9 @@ export default function AttachmentsAdd(props) {
                                 resizeMode={"contain"}
                             />
                             {!loading ? <>
-                                <Text style={style.documentTypeTitle}>Document Type</Text>
                                 <Input
-                                    data={categories}
-                                    labelField="name"
-                                    valueField="id"
-                                    placeholder={'Select Document Type'}
-                                    searchPlaceholder="Search..."
-                                    value={selectedCategory?.id}
-                                    onFocus={() => setIsFocus(true)}
-                                    onBlur={() => setIsFocus(false)}
-                                    onChangeText={(categoryId, category) => {
-                                        setSelectedCategory(category);
-                                    }}
-                                />
-                                <Input
-                                    placeholder={'Name or Document ID'}
-                                    assistiveText={'Give this document a useful name'}
+                                    label={'Name or Document ID'}
+                                    placeholder={'Give this document a useful name'}
                                     onChangeText={setName}
                                     value={name}
                                     errorMessage={nameError}
@@ -219,7 +209,6 @@ export default function AttachmentsAdd(props) {
                                 <Button disabled={loading} onPress={onSubmit} title={'Submit'} containerStyle={style.submitButton} />
                             </> : <Text style={{ textAlign: "center" }}>Please wait! Uploading...{utils.formatNumber(progress * 100, 2)}%</Text>}
                         </View>}
-
                 </View>}
         </ScrollView>
     </KeyboardAvoidingView>

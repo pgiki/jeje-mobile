@@ -4,12 +4,13 @@ import { BudgetsStack, HomeStack, StatsStack } from './Stacks';
 // import { createStackNavigator } from '@react-navigation/stack';
 import { useNavigation } from '@react-navigation/native';
 import { useRecoilState } from 'recoil';
-import {notificationsState} from 'src/atoms';
+import { notificationsState } from 'src/atoms';
 import messaging from '@react-native-firebase/messaging';
 import dynamicLinks from '@react-native-firebase/dynamic-links';
 import { utils } from 'src/helpers';
 import { colors } from 'src/helpers';
 import { useMMKVString } from 'react-native-mmkv';
+import { Icon } from 'react-native-elements';
 
 const Tab = createMaterialBottomTabNavigator();
 
@@ -52,19 +53,36 @@ export function MainStack() {
         return unsubscribe;
     }, []);
 
-    if(!loggedUser) return <HomeStack />
+    if (!loggedUser) return <HomeStack />
 
     return (
-        <Tab.Navigator 
+        <Tab.Navigator
             initialRouteName={initialRoute}
-            barStyle={{ backgroundColor: 'white'}}
+            barStyle={{ backgroundColor: 'white' }}
             activeColor={colors.primary}
             inactiveColor={colors.black}
         >
-            <Tab.Screen name="Home" component={HomeStack} />
-            <Tab.Screen name="Stats" component={StatsStack} />
-            <Tab.Screen name="BudgetsStack" component={BudgetsStack} 
-                options={()=>({title:"Budgets"})} 
+            <Tab.Screen
+                name="Home"
+                component={HomeStack}
+                options={{
+                    tabBarLabel: 'Home',
+                    tabBarIcon: ({ color }) => (
+                        <Icon name="home-outline" color={color} size={26} type={'ionicon'} />
+                    ),
+                }}
+
+            />
+            {/* <Tab.Screen name="Stats" component={StatsStack} /> */}
+            <Tab.Screen
+                name="BudgetsStack"
+                component={BudgetsStack}
+                options={{
+                    tabBarLabel: 'Budgets',
+                    tabBarIcon: ({ color }) => (
+                        <Icon name="dollar-sign" type='feather' color={color} size={26} />
+                    ),
+                }}
             />
         </Tab.Navigator>
     );

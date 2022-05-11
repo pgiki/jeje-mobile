@@ -5,10 +5,10 @@ import {
   StyleSheet,
   Alert,
   FlatList,
-  Platform,
+  Platform, TouchableOpacity,
 } from 'react-native';
-import { Text, SearchBar, ListItem} from 'react-native-elements';
-import { colors, utils, requests, url} from 'src/helpers';
+import { Text, SearchBar, ListItem, Icon } from 'react-native-elements';
+import { colors, utils, requests, url } from 'src/helpers';
 import _ from 'lodash';
 import { useNavigation } from '@react-navigation/native';
 import Loading from 'src/components/Loading';
@@ -22,13 +22,13 @@ export default function Chats(props) {
   const [response, setResonse] = useState({});
   const { nextURL, count } = response;
   // const searchInput=useRef()
-  const startURL = `${url.spendi.Category}`;
+  const startURL = `${url.spendi.Budget}`;
 
   const fetchData = async link => {
     setLoading(true);
     try {
       const res = await requests.get(link);
-      res.page==1?setResults(res.results):setResults([...results, ...res.results]);
+      res.page == 1 ? setResults(res.results) : setResults([...results, ...res.results]);
       setResonse({
         nextURL: res.next,
         previousURL: res.previous,
@@ -59,7 +59,7 @@ export default function Chats(props) {
 
   useEffect(() => {
     debounceFetchData(
-      utils.stringify({search: searchText||undefined}, {baseURL: startURL})
+      utils.stringify({ search: searchText || undefined }, { baseURL: startURL })
     );
   }, [searchText]);
 
@@ -71,7 +71,11 @@ export default function Chats(props) {
     return unsubscribe;
   }, []);
 
-  const isEmpty = results.length ===0 && !loading;
+  function addItem() {
+    navigation.navigate('Budgets/Add', {})
+  }
+
+  const isEmpty = results.length === 0 && !loading;
 
   return (
     <View style={style.root}>
@@ -101,24 +105,38 @@ export default function Chats(props) {
         refreshing={refreshing}
         data={results}
         renderItem={({ item, index }) => (
-          <ListItem bottomDivider>
+          <ListItem bottomDivider onPress={() => navigation.navigate('Budgets/Add', { itemId: item.id })}>
             <ListItem.Content>
-              <ListItem.Title>
-                {item.name}
+              <ListItem.Title numberOfLines={1}>
+                {item.category?.name} | {item.name}
               </ListItem.Title>
-              {!!item.budget && <ListItem.Subtitle>
-                {utils.formatDate(item.budget.active_from, 'll')} - {utils.formatDate(item.budget.active_until, 'll')}
-              </ListItem.Subtitle>}
+              <ListItem.Subtitle>
+                {item.budget_type?.title()} Goal: {item.amount_currency} {utils.formatNumber(item.amount)}
+              </ListItem.Subtitle>
+
+              <ListItem.Subtitle>
+                { //Object.keys(x).map(key=>key+" TZS "+x[key]).join(" | ")
+                  Object.keys(item.stats)
+                    .map(key => `${key.title()}: ${utils.formatNumber(item.stats[key] || 0)}`)
+                    .join(" | ")
+                }
+              </ListItem.Subtitle>
+
+              <ListItem.Subtitle>
+                {utils.formatDate(item.active_from, 'll')} - {utils.formatDate(item.active_until, 'll')}
+              </ListItem.Subtitle>
             </ListItem.Content>
-            {!!item.budget &&
-            <ListItem.Subtitle>
-              {item.budget?.amount_currency} {utils.formatNumber(item.budget?.amount)}
-            </ListItem.Subtitle>}
             <ListItem.Chevron />
           </ListItem>
         )}
         keyExtractor={utils.keyExtractor}
       />
+
+      <TouchableOpacity style={style.fixedButton} onPress={addItem}>
+        <View style={style.fixedButtonIcon}>
+          <Icon name="plus" type="entypo" color={colors.white} size={30} />
+        </View>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -136,4 +154,28 @@ const style = StyleSheet.create({
     paddingHorizontal: 5,
     backgroundColor: colors.backgroundColor,
   },
+  //fixed button
+  fixedButton: {
+    position: 'absolute',
+
+    bottom: Platform.select({
+      ios: 20,
+      default: 20,
+    }),
+    right: Platform.select({
+      ios: 20,
+      default: 15,
+    }),
+    backgroundColor: colors.primary9,
+    height: 45,
+    width: 45,
+    borderRadius: 22.5,
+    alignItems: 'center',
+    alignSelf: 'center',
+  },
+  fixedButtonIcon: {
+    alignSelf: 'center',
+    marginTop: 8,
+  },
+  //fixed button end
 })

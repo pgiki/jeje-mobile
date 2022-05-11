@@ -8,6 +8,11 @@ export const roleState = atom({
   default: 0, //
   // effects: [persistAtom("roleState")],
 });
+export const selectedFileState = atom({
+  key: 'selectedFileState',
+  default: null, // {}
+  // effects: [persistAtom("roleState")],
+});
 
 // a global state for setting modals
 export const modalState = atom({

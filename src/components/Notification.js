@@ -8,22 +8,23 @@ import logo from 'src/assets/logo.png';
 import dayjs from 'dayjs';
 import { storage, DEBUG, appName, utils } from 'src/helpers';
 // for recoil
-import { notificationsState, localNotificationState } from 'src/atoms';
+import { localNotificationState } from 'src/atoms';
 import { useRecoilState } from 'recoil';
+import { useMMKVString } from 'react-native-mmkv';
 
 async function saveTokenToDatabase(token) {
-  // Assume user is already signed in
-  // const user = auth().currentUser;
-  // Add the token to the users datastore
-  // console.log('Token is: ', token, 'user', user);
   storage.saveDeviceToken(token);
 }
 
 export default function Notification() {
   const navigation = useNavigation();
-  const [notifications, setNotifications] = useRecoilState(notificationsState);
+  const [_notifications, _setNotifications] = useMMKVString('notificationsState');
   const [localNotification] = useRecoilState(localNotificationState);
+
+  const notifications = utils.parse(_notifications);
+  const setNotifications = (value) => _setNotifications(JSON.stringify(value));
   const popup = useRef();
+
   async function requestUserPermission() {
     const authorizationStatus = await messaging().requestPermission();
     if (authorizationStatus) {
@@ -111,9 +112,6 @@ export default function Notification() {
 
   useEffect(() => {
     requestUserPermission();
-  }, []);
-
-  useEffect(() => {
     // Get the device token
     getDeviceToken();
     // Listen to whether the token changes

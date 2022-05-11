@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from 'react';
-import {View, StyleSheet } from 'react-native';
-import {Text} from 'react-native-paper';
+import { View, StyleSheet } from 'react-native';
+import { Text } from 'react-native-paper';
 import { createStackNavigator } from '@react-navigation/stack';
 import FastImage from 'react-native-fast-image';
 import { utils } from 'src/helpers';
@@ -16,6 +16,7 @@ import Chat from 'src/screens/Chats/Chat';
 import Attachments from 'src/screens/Attachments';
 import AttachmentsAdd from 'src/screens/Attachments/Add';
 import ProfilesView from 'src/screens/Profiles/View';
+import Camera from 'src/screens/Camera';
 
 import TransactionsAdd from 'src/screens/Transactions/Add';
 import TransactionsView from 'src/screens/Transactions/View';
@@ -37,9 +38,9 @@ export function HomeStack() {
           component={Dashboard}
           options={({ route, navigation }) => ({
             // title: 'Chat',
-            headerShown:false
+            headerShown: false
           })}
-        /> 
+        />
         <Stack.Screen
           name="Chats"
           component={Chats}
@@ -52,6 +53,14 @@ export function HomeStack() {
           component={Chat}
           options={({ route, navigation }) => ({
             title: 'Chat',
+          })}
+        />
+        <Stack.Screen
+          name="Camera"
+          component={Camera}
+          options={({ route, navigation }) => ({
+            // title: 'Camera',
+            headerShown: false,
           })}
         />
         <Stack.Screen

@@ -8,18 +8,20 @@ import {
 } from 'react-native';
 import { Text, ListItem, Divider, Tab, TabView } from 'react-native-elements';
 import { colors, utils, font } from 'src/helpers';
-import { useRecoilState } from 'recoil';
-import { notificationsState } from 'src/atoms';
 import dayjs from 'dayjs';
 import Chats from 'src/screens/Chats';
+import { useMMKVString } from 'react-native-mmkv';
 
 export default function Notifications(props) {
 
-  const [results, setResults] = useRecoilState(notificationsState);
+  const [_results, _setResults] = useMMKVString('notificationsState');
   const [refreshing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [tabIndex, setTabIndex] = React.useState(0);
   const { navigation } = props;
+
+  const results = utils.parse(_results); //change to array
+  functionsetResults = (value) => _setResults(JSON.stringify(value))
 
   const onPressItem = ({ item }) => {
     if (item?.data?.type) {
@@ -36,11 +38,11 @@ export default function Notifications(props) {
   };
 
   useEffect(() => {
-    // mark all messages read when exit this component;
     navigation.setOptions({
       title: 'Inbox',
     });
     return () => {
+      // mark all messages read when exit this component;
       setResults(
         results.map(item => {
           return { ...item, status: 'read' };

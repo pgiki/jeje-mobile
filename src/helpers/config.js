@@ -5,13 +5,13 @@ export const MIN_LOAN_DURATION = 60;
 export const DISABLED_ADS = true;
 export const appName = 'Jeje';
 export const appID = 'app.jeje'; //TODO: set different ids for android and ios
-export const FirebaseWebApiKey = 'AIzaSyCUSbQow9BfIb3jdOBdLp6ZMDp9u4ID21E';
-export const firebaseDynamicLinkPrefix = 'niwezeshe.page.link';
+export const FirebaseWebApiKey = 'AIzaSyDp-jvPx0af0gjhMh9vbqnXkzyGh_qXsEM';
+export const firebaseDynamicLinkPrefix = 'jeje.page.link';
 
 export const config = {
   // API_URL: 'http://192.168.247.28:8000',
-  API_URL: 'http://192.168.43.25:8000',
-  // API_URL: 'https://niwezesheapi.hudumabomba.com',
+  // API_URL: 'http://192.168.100.22:8000',
+  API_URL: 'https://niwezesheapi.hudumabomba.com',
 };
 
 export const priceSliderScale = {
@@ -105,8 +105,8 @@ export const url = {
   register: '/api/v1/auth/register/',
   user: '/api/v1/auth/user/',
   // pasword
-  tnc: 'https://hudumabomba.com/tnc?app=instadalali',
-  privacy: 'https://hudumabomba.com/privacy?app=instadalali',
+  tnc: 'https://hudumabomba.com/tnc?app=jeje',
+  privacy: 'https://hudumabomba.com/privacy?app=jeje',
   password: {
     reset: '/api/v1/auth/password/reset/' /*POST: email*/,
     resetConfirm: '/api/v1/auth/password/reset/confirm/',
@@ -121,7 +121,7 @@ export const url = {
     room: '/chats/api/v1/room/',
     message: '/chats/api/v1/message/',
   },
-  spendi:{
+  spendi: {
     Transaction: '/spendi/api/v1/Transaction/',
     Category: '/spendi/api/v1/Category/',
     TransactionRecurrence: '/spendi/api/v1/TransactionRecurrence/',

@@ -27,6 +27,7 @@ import { useForm, Controller } from 'react-hook-form';
 import Onboarding from 'react-native-onboarding-swiper';
 import logo from 'src/assets/logo.png'
 import FastImage from 'react-native-fast-image';
+import { appName } from 'src/helpers';
 
 export default function Login(props) {
   const {
@@ -53,8 +54,8 @@ export default function Login(props) {
       help: <Text style={style.grey} onPress={() => setAction('forgotPassword')}>Forgot password? <Text style={style.underline}>Reset</Text></Text>,
     },
     signup: {
-      title: 'Boost your Financial Status',
-      subtitle: 'Join today and connect with friends who are willing to boost you financially.',
+      title: 'Track every penny',
+      subtitle: 'Join today and know where your money goes',
       help: <Text onPress={readTnC}>
         By signing up you agree to <Text onPress={readTnC} style={style.link}>our terms and conditions</Text></Text>,
       actionTeaser: 'You are new here?',
@@ -95,7 +96,7 @@ export default function Login(props) {
   useEffect(() => {
     navigation.setOptions({
       title: showOnboarding ? '' : actionMap[action].title,
-      headerShown:!showOnboarding,
+      headerShown: !showOnboarding,
     });
     setGeneralError('');
   }, [action, showOnboarding]);
@@ -207,7 +208,7 @@ export default function Login(props) {
   const getErrorMessage = key => {
     let error = errors[key];
     if (error) {
-      return validation[key][error.type]?.message || error.type;
+      return validation[key] && validation[key][error.type]?.message || error.type;
     } else {
       return null;
     }
@@ -340,9 +341,9 @@ export default function Login(props) {
           bottomBarHighlight={true}
           onDone={onDoneTour}
           onSkip={onDoneTour}
-          containerStyles={style.onboard}
-          subTitleStyles={style.subTitleStyles}
-          titleStyles={style.titleStyles}
+          // containerStyles={style.onboard}
+          // subTitleStyles={style.subTitleStyles}
+          // titleStyles={style.titleStyles}
           skipLabel={''}
           nextLabel={''}
           pages={[
@@ -366,30 +367,19 @@ export default function Login(props) {
               title: 'Loan Portfolio',
               subtitle: 'Create groups and choose who sees your loan offering portfolio',
             },
-            {
-              backgroundColor: '#fff',
-              image: <Image
-                source={require('src/assets/onboarding/creditScore.jpg')}
-                style={style.onboardImage}
-                resizeMode="contain"
-              />,
-              title: 'Credit Score',
-              subtitle: 'Before giving a loan to your peers, quickly identify peers likelihood to pay you back on time',
-            },
           ]}
         />
         <View style={style.actionButtons}>
-          <Button title={'Sign Up'.toUpperCase()} type={'solid'} onPress={onDoneTour} />
+          <Button title={'Sign Up'} type={'solid'} onPress={onDoneTour} labelStyle={style.white} />
           <View style={style.actionButtonDivider} />
-          <Button title={'Log In'.toUpperCase()} type="outline" onPress={login} />
+          <Button title={'Log In'} type="outline" onPress={login} />
         </View>
       </> :
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <ScrollView>
-            <View>
-              <FastImage source={logo} style={style.logo} />
-              <Text style={style.appName}>Niwezeshe</Text>
-            </View>
+
+            <FastImage source={logo} style={style.logo} resizeMode='contain' />
+
             <Text style={style.subtitleText}>{subtitle}</Text>
             <View style={style.container}>
               {inputs
@@ -473,6 +463,7 @@ export default function Login(props) {
                 buttonStyle={style.submitButton}
                 onPress={handleSubmit(onSubmit)}
                 title={(loading ? 'Wait...' : actionName)}
+                labelStyle={style.white}
               />
               <View style={style.otherActionsContainer}>
                 {otherActions
@@ -505,16 +496,19 @@ const style = StyleSheet.create({
   },
 
   onboard: {
-   padding: 10,
+    padding: 10,
     width,
-   
+
   },
   onboardImage: {
     height: 0.4 * width,
     width: 0.6 * width,
     padding: 0,
   },
-  logo: { width: 40, height: 40 },
+  logo: {
+    width: 100,
+    height: 100
+  },
   subtitleText: {
     paddingHorizontal: 25,
     color: 'gray',
@@ -530,6 +524,7 @@ const style = StyleSheet.create({
   horizontal: {
     flexDirection: 'row',
   },
+  white: { color: 'white' },
   horizontalSpaceBtn: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -612,7 +607,7 @@ const style = StyleSheet.create({
   actionButtons: { marginTop: 40, marginBottom: 0.15 * height, paddingHorizontal: 0.2 * width },
   logo: { width: 40, height: 40, alignSelf: 'center' },
   appName: { textAlign: 'center', color: colors.primary, fontSize: 20, paddingBottom: 10 },
-  grey:{ color: colors.grey },
-  subTitleStyles:{lineHeight:28, fontFamily: font.light},
-  titleStyles: {fontFamily: font.regular, fontWeight: '600', backgroundColor:'blue'},
+  grey: { color: colors.grey },
+  subTitleStyles: { lineHeight: 28, fontFamily: font.light },
+  titleStyles: { fontFamily: font.regular, fontWeight: '600', backgroundColor: 'blue' },
 });

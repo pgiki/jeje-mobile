@@ -79,8 +79,8 @@ export default function Profile(props) {
     await utils.share({
       title: `Download ${appName}`,
       message: `${loggedUser?.first_name || "You're"
-        } invited you to download ${appName}. Trusted P2P lending platform`,
-      url: link.shortLink || 'https://onelink.to/niwezeshe',
+        } invited you to download ${appName}. Track every penny`,
+      url: link.shortLink || 'https://onelink.to/jeje',
     });
     setIsGeneratingLink(false);
   };
@@ -163,11 +163,11 @@ Invite a friend
             }
           },
         },
-    //   ],
-    // },
-    // {
-    //   name: 'Help',
-    //   options: [
+        //   ],
+        // },
+        // {
+        //   name: 'Help',
+        //   options: [
         {
           title: 'Terms and Conditions',
           subtitle: 'All the stuff you should know',
@@ -186,10 +186,10 @@ Invite a friend
           icon: { name: 'headphones', type: 'feather' },
           onPress: onContactSupport,
         },
-    //   ],
-    // },
-    // {
-    //   options: [
+        //   ],
+        // },
+        // {
+        //   options: [
         {
           title: 'Log out',
           subtitle: 'Once you logout, some cached data may be deleted',
@@ -226,14 +226,14 @@ Invite a friend
               </TouchableOpacity>
               <ListItem.Subtitle style={style.joinedDate}>
                 Joined {utils.formatDate(loggedUser?.date_joined, 'll')}
-                </ListItem.Subtitle>
+              </ListItem.Subtitle>
             </View>
           )}
 
         </View>
-        
+
         <View style={style.sectionsContainer}>
-        <Divider />
+          <Divider />
           {sections.map((section, i) => (
             <View key={`section-${i}`}
             // style={style.sectionContainer}
@@ -272,7 +272,7 @@ const style = StyleSheet.create({
     backgroundColor: colors.white,
     // paddingBottom:100,
     minHeight: 0.8 * height,
-    marginHorizontal:20
+    marginHorizontal: 20
   },
   sectionContainer: {
     marginVertical: 20,
@@ -298,7 +298,7 @@ const style = StyleSheet.create({
     // justifyContent: 'space-between',
     paddingBottom: 30,
     paddingTop: 10,
-    paddingHorizontal:30,
+    paddingHorizontal: 30,
   },
   avatar: {
     width: 60,

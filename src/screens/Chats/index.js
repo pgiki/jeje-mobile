@@ -30,7 +30,7 @@ export default function Chats(props) {
     setLoading(true);
     try {
       const res = await requests.get(link);
-      res.page ===1? setResults(res.results):setResults([...results, ...res.results]);
+      res.page === 1 ? setResults(res.results) : setResults([...results, ...res.results]);
       setResonse({
         nextURL: res.next,
         previousURL: res.previous,
@@ -76,7 +76,7 @@ export default function Chats(props) {
     navigation.navigate('Chat', { room: item, roomId: item.id });
   };
 
-  const isEmpty = results.length ===0 && !loading;
+  const isEmpty = results.length === 0 && !loading;
 
   return (
     <View style={style.root}>
@@ -124,7 +124,7 @@ function RenderItem(props) {
       onPress={() => onPressItem({ item })}>
       <View style={style.horizontal}>
         <View>
-          <ListItem.Title style={style.title}>
+          <ListItem.Title style={style.title} numberOfLines={1}>
             {item.display_name}
           </ListItem.Title>
         </View>
@@ -158,9 +158,6 @@ const style = StyleSheet.create({
   divider: {
     paddingBottom: 10,
   },
-  time: {
-    fontSize: 13,
-  },
   horizontal: {
     flexDirection: 'row', justifyContent: 'space-between',
   },
@@ -183,7 +180,13 @@ const style = StyleSheet.create({
     backgroundColor: 'white',
   },
   title: {
-    fontSize: 18,
+    fontSize: 16,
+    fontWeight: '400',
+    width: '99.9%',
+  },
+  time: {
+    fontSize: 10,
+    color: 'grey'
   },
   avatar: {
     width: 40,

@@ -6,6 +6,7 @@
  * @flow strict-local
  */
 import React, { useState, Suspense } from 'react';
+import codePush from 'react-native-code-push';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { Provider as PaperProvider } from 'react-native-paper';
@@ -16,6 +17,7 @@ import { MainStack } from 'src/navigation';
 import Notification from 'src/components/Notification';
 import Loading from 'src/components/Loading';
 import { utils, setAuthorization } from 'src/helpers';
+import SplashScreen from 'react-native-splash-screen';
 
 
 function App(props) {
@@ -26,7 +28,7 @@ function App(props) {
       // initialize the token client here
       setAuthorization(loggedUser.token);
     }
-    // SplashScreen.hide();
+    SplashScreen.hide();
   };
   return (
     <SafeAreaProvider>
@@ -45,4 +47,5 @@ function App(props) {
     </SafeAreaProvider>
   );
 };
-export default App;
+
+export default codePush(App);

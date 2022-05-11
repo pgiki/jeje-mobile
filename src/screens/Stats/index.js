@@ -4,18 +4,19 @@ import {
   View,
   StyleSheet,
   Alert,
-  FlatList,
+  // FlatList,
   TouchableOpacity,
   Platform, Dimensions, ScrollView,
 } from 'react-native';
 import { Text, SearchBar, ListItem, Divider, Icon } from 'react-native-elements';
 import { colors, utils, requests, url, font } from 'src/helpers';
 import { Menu } from 'react-native-paper';
-import dayjs, { duration } from 'dayjs';
 import _ from 'lodash';
 import { useNavigation } from '@react-navigation/native';
 import Loading from 'src/components/Loading';
 import { Button } from 'src/components';
+import FlatList from 'src/components/FlatList';
+
 import {
   LineChart,
   BarChart,
@@ -45,12 +46,12 @@ const chartConfig = {
 
 export default function Stats(props) {
   const navigation = useNavigation();
-  const durations =[
-    {value:'today', label:"Today"}, 
-    {value:'week', label:"Week"}, 
-    {value:'month', label:'Month'},
-    {value: 'year', label:'Year'},
-  ] 
+  const durations = [
+    { value: 'today', label: "Today" },
+    { value: 'week', label: "Week" },
+    { value: 'month', label: 'Month' },
+    { value: 'year', label: 'Year' },
+  ]
   const [searchText, setSearchText] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -61,8 +62,6 @@ export default function Stats(props) {
   const [loggedUser, setLoggedUser] = useState(utils.getUser())
   const [visibleDurationPicker, setVisibleDurationPicker] = useState(false);
   const [durationPicked, setDurationPicked] = useState(durations[0]);
-
-
 
   const openDurationPicker = () => setVisibleDurationPicker(true);
   const closeDurationPicker = () => setVisibleDurationPicker(false);
@@ -161,21 +160,21 @@ export default function Stats(props) {
         <Menu
           visible={visibleDurationPicker}
           onDismiss={closeDurationPicker}
-          anchor={<Button onPress={openDurationPicker} title={durationPicked.label} type='clear'/>}
+          anchor={<Button onPress={openDurationPicker} title={durationPicked.label} type='clear' />}
         >
-          {durations.map(duration=><Menu.Item 
-          key={duration.value} 
-          onPress={() =>{
-            closeDurationPicker();
-            setDurationPicked(duration);
-          }} 
-          title={duration.label} />)}
+          {durations.map(duration => <Menu.Item
+            key={duration.value}
+            onPress={() => {
+              closeDurationPicker();
+              setDurationPicked(duration);
+            }}
+            title={duration.label} />)}
         </Menu>
 
       </View>
       <LineChart
         data={{
-          labels: ["January", "February", "March", "April", "May", "June"],
+          labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
           datasets: [
             {
               color: () => 'red',
@@ -212,8 +211,8 @@ export default function Stats(props) {
             }
           ]
         }}
-        width={Dimensions.get("window").width*0.95} // from react-native
-        height={Dimensions.get("window").height*0.2}
+        width={Dimensions.get("window").width * 0.95} // from react-native
+        height={Dimensions.get("window").height * 0.25}
         yAxisLabel={currency}
         // yAxisSuffix="k"
         yAxisInterval={1} // optional, defaults to 1
@@ -227,14 +226,14 @@ export default function Stats(props) {
 
       <View style={style.horizontal}>
         <Text style={style.title}>By Categories</Text>
-        <Button onPress={() => setIsPieAbsolute(!isPieAbsolute)} 
-        title={isPieAbsolute ? '%' : currency} type='clear'/>
+        <Button onPress={() => setIsPieAbsolute(!isPieAbsolute)}
+          title={isPieAbsolute ? '%' : currency} type='clear' />
       </View>
       <ScrollView horizontal contentContainerStyle={{ paddingVertical: 10 }}>
         <PieChart
           data={data}
           width={Dimensions.get("window").width * 1.2}
-          height={Dimensions.get("window").height * 0.15}
+          height={Dimensions.get("window").height * 0.2}
           chartConfig={chartConfig}
           accessor={"population"}
           backgroundColor={"transparent"}
@@ -264,11 +263,38 @@ export default function Stats(props) {
         strokeWidth={8}
       />
       <View style={style.horizontal}>
-        <Text style={style.title}>Spending by Tags</Text>
-        <TouchableOpacity>
-          <Icon name='arrowright' type='antdesign' color={colors.primary}/>
-        </TouchableOpacity>
+        <Text style={[style.title, { marginLeft: 10 }]}>Spending by Tags</Text>
+        {/* <TouchableOpacity>
+          <Icon name='arrowright' type='antdesign' color={colors.primary} />
+        </TouchableOpacity> */}
       </View>
+
+      <FlatList
+        startURL={url.spendi.Tag}
+        renderItem={({ item, index }) => (
+          <ListItem bottomDivider onPress={() => navigation.navigate("Dashboard", {
+            searchFilters: {
+              tags__id: item.id
+            }
+          })}>
+            <ListItem.Content>
+              <ListItem.Title style={{ fontSize: 18, fontWeight: '600' }}>{item.name}</ListItem.Title>
+              <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between' }}>
+                <View>
+                  <Text><Icon name='arrowup' color={colors.primary} type='antdesign' size={14} /> TZS 3,000</Text>
+                </View>
+                <View>
+                  <Text><Icon name='arrowdown' color={colors.warning} type='antdesign' size={14} /> TZS 7,000</Text>
+                </View>
+
+              </View>
+            </ListItem.Content>
+
+            <ListItem.Chevron />
+          </ListItem>
+        )}
+      />
+
     </ScrollView>
   );
 }
@@ -282,12 +308,12 @@ const style = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between',
   },
   root: {
-    flex: 1,
+    // flex: 1,
     paddingTop: 10,
     paddingHorizontal: 15,
     backgroundColor: colors.backgroundColor,
-    paddingBottom:10,
+    paddingBottom: 10,
   },
-  title:{fontWeight:'bold'}
+  title: { fontWeight: 'bold' }
 
 });
