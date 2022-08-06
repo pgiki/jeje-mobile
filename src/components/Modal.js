@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
 import { Modalize } from 'react-native-modalize';
 import { useModalize } from 'react-native-modalize/lib/utils/use-modalize';
-import { Text } from 'react-native-elements';
+import { Text } from '@rneui/themed';
 import { height } from 'src/helpers';
 
 export default function Modal(props) {
@@ -98,9 +98,10 @@ const s = StyleSheet.create({
   },
 
   content__heading: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '600',
     color: '#333',
+    padding: 20,
     flex: 1,
   },
 });

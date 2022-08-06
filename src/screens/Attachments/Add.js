@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useContext } from 'react'
 import { View, TouchableOpacity, StyleSheet, Platform, Alert, Linking, KeyboardAvoidingView, ScrollView } from "react-native"
-import { Button, Image, Text, Icon } from "react-native-elements";
+import { Button, Image, Text, Icon } from "@rneui/themed";
 import { PERMISSIONS, request, RESULTS } from 'react-native-permissions';
 import DocumentPicker, {
     isInProgress,
@@ -12,6 +12,7 @@ import uploadingGIF from 'src/assets/uploading.gif';
 import Input from 'src/components/Input'
 import { selectedFileState } from 'src/atoms';
 import { useRecoilState } from 'recoil';
+import { LocalizationContext } from 'src/helpers';
 
 export default function AttachmentsAdd(props) {
     const {
@@ -24,8 +25,9 @@ export default function AttachmentsAdd(props) {
             }
         },
     } = props;
+    const { i18n } = useContext(LocalizationContext)
     const baseURL = url.spendi.Attachment;
-    const [cameraStatus, setCameraStatus] = useState(undefined);
+    const [cameraStatus, setCameraStatus] = useState('pending');
     const [file, setFile] = useRecoilState(selectedFileState)
     const [name, setName] = useState('')
     const [nameError, setNameError] = useState()
@@ -58,9 +60,9 @@ export default function AttachmentsAdd(props) {
             }
             else {
                 Alert.alert(
-                    "Camera Permission",
-                    `Camera permission is required to be able to upload documents. Current permissions is ${res.toUpperCase()}`,
-                    [{ text: 'Later' }, { text: "Check Permissions", onPress: () => requestCamera(true) }]
+                    i18n.t('Camera Permission'),
+                    i18n.t('attachments_add_camera_permission_state', { permission: res.toUpperCase() }),
+                    [{ text: i18n.t('Later') }, { text: i18n.t("Check Permissions"), onPress: () => requestCamera(true) }]
                 )
             }
         }
@@ -91,7 +93,7 @@ export default function AttachmentsAdd(props) {
 
     const uploadFile = useCallback((type = "camera") => {
         if (type === 'camera') {
-            navigation.navigate('Camera')
+            navigation.navigate('Camera', { scanBarcode: false })
         } else {
             DocumentPicker.pick({
                 type: [types.doc, types.docx, types.pdf, types.images],
@@ -104,7 +106,7 @@ export default function AttachmentsAdd(props) {
 
     async function onSubmit() {
         if (!name) {
-            setNameError('The name is required')
+            setNameError(i18n.t('The name is required'))
             return;
         } else {
             setNameError('')
@@ -135,15 +137,24 @@ export default function AttachmentsAdd(props) {
                     user: loggedUser?.id,
                     [itemType]: itemId
                 });
-                Alert.alert("Uploaded", "Your file was uploaded successfuly");
+                Alert.alert(
+                    i18n.t('Uploaded'),
+                    i18n.t('Your file was uploaded successfuly')
+                );
                 setLoading(false);
                 navigation.goBack();
             } else {
-                Alert.alert("Upload Failed", resp.data);
+                Alert.alert(
+                    i18n.t('Upload Failed'),
+                    resp.data
+                );
             }
         } catch (error) {
             setLoading(false);
-            Alert.alert("File Upload Error", error.message);
+            Alert.alert(
+                i18n.t('File Upload Error'),
+                error.message
+            );
         }
     }
     const isCameraOK = cameraStatus === RESULTS.GRANTED;
@@ -152,10 +163,10 @@ export default function AttachmentsAdd(props) {
             {!isCameraOK && !file &&
                 <View style={style.mv100}>
                     <Text>
-                        Camera permission is required to be able to upload documents. Current permissions is {cameraStatus?.toUpperCase()}
+                        {i18n.t('attachments_add_camera_permission_state', { permission: cameraStatus?.toUpperCase() })}
                     </Text>
                     <Button
-                        title={"Check Camera Permissions"}
+                        title={i18n.t("Check Camera Permissions")}
                         onPress={() => requestCamera()}
                         containerStyle={style.mv100}
                     />
@@ -171,7 +182,7 @@ export default function AttachmentsAdd(props) {
                                     size={90}
                                     color={colors.primary} />
                                 <Text style={style.uploadInfoText}>
-                                    These documents are private and only visible to people you choose to share with.
+                                    {i18n.t('attachments_add_help_text')}
                                 </Text>
                             </View>
                             <View style={style.cameraActionButtons}>
@@ -200,14 +211,18 @@ export default function AttachmentsAdd(props) {
                             />
                             {!loading ? <>
                                 <Input
-                                    label={'Name or Document ID'}
-                                    placeholder={'Give this document a useful name'}
+                                    label={i18n.t('Name or Document ID')}
+                                    placeholder={i18n.t('Give this document a useful name')}
                                     onChangeText={setName}
                                     value={name}
                                     errorMessage={nameError}
                                 />
-                                <Button disabled={loading} onPress={onSubmit} title={'Submit'} containerStyle={style.submitButton} />
-                            </> : <Text style={{ textAlign: "center" }}>Please wait! Uploading...{utils.formatNumber(progress * 100, 2)}%</Text>}
+                                <Button disabled={loading} onPress={onSubmit} title={i18n.t('Submit')} containerStyle={style.submitButton} />
+                            </> : <Text style={style.uploadingText}>
+                                {
+                                    i18n.t('attachments_add_upload_progress', { progress: utils.formatNumber(progress * 100, 2) })
+                                }
+                            </Text>}
                         </View>}
                 </View>}
         </ScrollView>
@@ -240,6 +255,7 @@ const style = StyleSheet.create({
     documentTypeTitle: { fontSize: 16, fontWeight: "bold", paddingVertical: 10 },
     choosePickerButton: { paddingHorizontal: 10, },
     uploadInfoText: { paddingTop: 40, textAlign: 'center', lineHeight: 26 },
+    uploadingText: { textAlign: "center" },
     uploadInfoContainer: { paddingVertical: 80 },
     font14: { fontSize: 14 },
 })

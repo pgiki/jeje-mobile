@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect, useContext } from 'react';
 import {
   View,
   StyleSheet,
@@ -9,8 +9,8 @@ import {
   SafeAreaView,
   Platform,
 } from 'react-native';
-import { Text, SearchBar, ListItem, Divider, Icon, Avatar } from 'react-native-elements';
-import { colors, utils, requests, url, font, height, width, setAuthorization } from 'src/helpers';
+import { Text, SearchBar, ListItem, Divider, Icon, Avatar } from '@rneui/themed';
+import { colors, utils, requests, url, height, setAuthorization, LocalizationContext } from 'src/helpers';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import dayjs from 'dayjs';
 import _ from 'lodash';
@@ -19,11 +19,13 @@ import Loading from 'src/components/Loading';
 import Modal from 'src/components/Modal';
 import Input from 'src/components/Input'
 import { Button } from 'src/components';
+import schema from 'src/schema';
 
 //TODO: April 18, 2022: use a reducer to set and manage filters
 
 export default function Dashboard(props) {
   const { navigation, route: { params } } = props;
+  const { i18n } = useContext(LocalizationContext);
   const [searchText, setSearchText] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -31,6 +33,8 @@ export default function Dashboard(props) {
   const [categories, setCategories] = useState([]);
   const [tags, setTags] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isDownloadingVisible, setIsDownloadingVisible] = useState(false);
   const [response, setResonse] = useState({
     total_spending: 0,
     total_income: 0,
@@ -49,6 +53,7 @@ export default function Dashboard(props) {
   const [dateField, setDateField] = useState('transaction_at__gte');
   const [users, setUsers] = useState([]);
   const [initialDate, setInitialDate] = useState();
+  const [reportTitle, setReportTitle] = useState('')
 
   const showDatePicker = (_dateField) => {
     setIsDatePickerVisible(true);
@@ -70,7 +75,7 @@ export default function Dashboard(props) {
   };
 
   const { nextURL, count } = response;
-  const startURL = `${url.spendi.Transaction}?order_by=-id&distinct=id`;
+  const startURL = `${url.spendi.Transaction}?order_by=-id&distinct=id&query=${schema.transaction}`;
   const {
     total_spending,
     total_income,
@@ -83,11 +88,6 @@ export default function Dashboard(props) {
   const card = { marginVertical: 10, paddingHorizontal: 10 }
   const toggleSearch = () => setIsSearching(!isSearching);
   const filtersLength = _.size(_.omitBy(searchFilters, _.isNil));
-
-  function login() {
-    utils.logout()
-    return navigation.navigate('Auth/Login')
-  }
 
   useEffect(() => {
     setAuthorization(loggedUser?.token)
@@ -121,10 +121,10 @@ export default function Dashboard(props) {
         total_balance
       });
     } catch (error) {
-      if (error.detail?.data === 'Invalid token.') {
+      if (error.data?.detail === 'Invalid token.') {
         return utils.logout()
       } else {
-        Alert.alert('Error Fetching Data', JSON.stringify(error.data.detail || error.message));
+        Alert.alert('Error Fetching Data', JSON.stringify(error.data?.detail || error.message));
       }
     }
     setLoading(false);
@@ -174,21 +174,42 @@ export default function Dashboard(props) {
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
       // refresh everytime focuses on scree and extraquery params changes
-      onRefresh();
+      const link = utils.stringify({
+        search: searchText,
+        ...searchFilters
+      }, { baseURL: startURL })
+      debounceFetchData(link);
     });
     return unsubscribe;
 
   }, [searchFilters]);
 
-  // const isEmpty = results.length ===0 && !loading;
   const openNotifications = () => navigation.navigate("Notifications");
   const addTransaction = () => navigation.navigate("Transactions/Add");
-  const onCloseFilters = () => setIsFilterModalVisible(false)
+  const onCloseFilters = () => setIsFilterModalVisible(false);
 
+  async function downloadData() {
+    setIsDownloading(true);
+    const link = utils.stringify({
+      search: searchText,
+      ...searchFilters,
+      download_report: 1,
+      report_title: reportTitle,
+      query: '{}'
+    }, { baseURL: startURL })
+    const res = await requests.get(link);
+    setIsDownloading(false);
+    setIsDownloadingVisible(false);
+    utils.openURL(res.report)
+  }
+
+  function downloadTransactions() {
+    setIsDownloadingVisible(true);
+  }
 
   return (
     <SafeAreaView style={style.root}>
-      <View style={{ flexDirection: 'row', paddingTop: 10, justifyContent: 'space-between' }}>
+      <View style={style.container1}>
         <View style={style.horizontal}>
           <Avatar
             title={utils.getAvatarInitials(loggedUser?.display_name)}
@@ -196,80 +217,86 @@ export default function Dashboard(props) {
             size={'medium'}
             onPress={() => navigation.navigate('Settings')}
           />
-          <View style={{ marginLeft: 10 }}>
-            <ListItem.Subtitle>Hello!</ListItem.Subtitle>
-            <ListItem.Title>{loggedUser?.first_name} {loggedUser?.last_name}</ListItem.Title>
+          <View style={style.greetingContainer}>
+            <ListItem.Subtitle>{i18n.t('Hello')}</ListItem.Subtitle>
+            <ListItem.Title>{loggedUser?.display_name}</ListItem.Title>
           </View>
         </View>
-
         <View style={style.horizontal}>
-          {/* <TouchableOpacity style={{ marginRight: 15 }}>
-            <Icon name={'share'} type='simple-line-icon' size={25} />
-          </TouchableOpacity> */}
-          <TouchableOpacity onPress={toggleSearch} style={{ marginRight: 15 }}>
-            <Icon name={isSearching ? 'close' : 'search'} type='evilicon' size={32} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={openNotifications} style={{ marginRight: 10 }}>
-            <Icon name='bells' type='antdesign' />
+          {results?.length > 0 && <TouchableOpacity style={style.mr15} onPress={downloadTransactions}>
+            <Icon name={'download'} type='antdesign' size={25} />
+          </TouchableOpacity>}
+          <TouchableOpacity onPress={openNotifications} style={style.mr10}>
+            <Icon name='notifications-outline' type='ionicon' size={30} />
           </TouchableOpacity>
         </View>
       </View>
       {/* <Divider /> */}
+
       <FlatList
         ListHeaderComponent={<View>
           <View>
             <View style={card}>
               <View style={style.horizontal}>
                 <View>
-                  <Text>Spending</Text>
-                  <Text style={{ fontSize: 16, fontWeight: 'bold', color: colors.danger }}>{currency} {utils.formatNumber(total_spending)}</Text>
+                  <Text>{i18n.t('Spending')}</Text>
+                  <Text style={style.spendingNumber}>{currency} {utils.toHR(total_spending)}</Text>
                 </View>
                 <View>
-                  <Text>Income</Text>
-                  <Text style={{ fontSize: 16, fontWeight: 'bold', color: colors.black }}>{currency} {utils.formatNumber(total_income)}</Text>
+                  <Text>{i18n.t('Income')}</Text>
+                  <Text style={style.incomeNumber}>{currency} {utils.toHR(total_income)}</Text>
                 </View>
                 <View>
-                  <Text>Balance</Text>
-                  <Text style={{ fontSize: 16, fontWeight: 'bold', color: colors.primary }}>{currency} {utils.formatNumber(total_balance)}</Text>
+                  <Text>{i18n.t('Balance')}</Text>
+                  <Text style={style.balanceNumber}>{currency} {utils.toHR(total_income - total_spending)}</Text>
                 </View>
               </View>
-              <View style={{ height: 15 }} />
+              <View style={style.h15} />
               <Divider />
             </View>
-
             {isSearching && <>
               <View style={card}>
                 <SearchBar
                   platform={Platform.OS}
-                  placeholder={'Search...'}
+                  placeholder={i18n.t('Search')}
                   onChangeText={text => setSearchText(text)}
                   value={searchText}
-
                 />
               </View>
               <Divider />
             </>}
           </View>
-
           <View style={style.horizontal}>
             <Text style={[style.title, style.ph10]}>
-              Transactions ({count})
+              {i18n.t('transactions_count', { count })}
             </Text>
-            <TouchableOpacity onPress={() => setIsFilterModalVisible(true)}
-              style={{ flexDirection: 'row', marginTop: 10, marginRight: 10 }}>
-              {filtersLength > 0 && <Icon
-                name={`filter-${filtersLength <= 9 ? filtersLength : '9-plus'}`}
-                type='materialicons' size={14}
-                color={colors.primary} />}
-              <Text style={{ color: colors.primary, marginTop: -5 }}>{' '}Filters</Text>
-            </TouchableOpacity>
+            <View style={style.horizontal}>
+              <TouchableOpacity onPress={toggleSearch} style={style.searchIcon}>
+                <Icon name={isSearching ? 'close' : 'search'} type='evilicon' size={26} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setIsFilterModalVisible(true)}
+                style={style.filtersIconContainer}>
+                {filtersLength > 0 && <Icon
+                  name={`filter-${filtersLength <= 9 ? filtersLength : '9-plus'}`}
+                  type='materialicons' size={14}
+                  color={colors.primary} />}
+                <Text style={style.filtersText}>{' '}{i18n.t('Filters')}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
         </View>}
         ListEmptyComponent={
           <View style={style.flex1}>
             {loading ? <Loading /> : <View style={style.noItemsContainer}>
-              <Text>A list of your transactions will appear hear</Text>
+              <Text>{i18n.t('A list of your transactions will appear hear')}</Text>
+              <Button
+                title={i18n.t('Add Transaction')}
+                style={style.noItemaddTransactionButton}
+                onPress={addTransaction}
+                textColor={colors.white}
+                icon={'note-plus-outline'}
+              />
             </View>}
           </View>
         }
@@ -284,11 +311,12 @@ export default function Dashboard(props) {
         )}
         keyExtractor={utils.keyExtractor}
       />
-      <TouchableOpacity style={style.fixedButton} onPress={addTransaction}>
-        <View style={style.fixedButtonIcon}>
-          <Icon name="plus" type="entypo" color={colors.white} size={30} />
-        </View>
-      </TouchableOpacity>
+      {results?.length > 0 &&
+        <TouchableOpacity style={style.fixedButton} onPress={addTransaction}>
+          <View style={style.fixedButtonIcon}>
+            <Icon name="plus" type="entypo" color={colors.white} size={30} />
+          </View>
+        </TouchableOpacity>}
       <DateTimePickerModal
         isVisible={isDatePickerVisible}
         mode="date"
@@ -298,43 +326,43 @@ export default function Dashboard(props) {
       />
       {true && <Modal
         visible={isFilterModalVisible}
-        title={'Transaction Filters'}
+        title={i18n.t('Transaction Filters')}
         modalHeight={height - 60}
         extraProps={{
           onClosed: onCloseFilters,
         }}
       >
-        <View style={{ paddingHorizontal: 10 }}>
+        <View style={style.ph10}>
           <Input
-            label='Keyword'
-            placeholder='Enter Keyword'
+            label={i18n.t('Search Keyword')}
+            placeholder={i18n.t('Enter Keyword')}
             onChangeText={setSearchText}
             value={searchText}
           />
           <Input
-            label='Categories'
-            placeholder='Choose Categories'
+            label={i18n.t('Categories')}
+            placeholder={i18n.t('Choose Categories')}
             onChangeText={setCategories}
             keyboardType='dropdown'
-            url={url.spendi.Category}
+            url={url.spendi.Category + '?query={id,name}'}
             many={true}
             value={categories}
           />
           <Input
-            label='Tags'
-            placeholder='Choose tags'
+            label={i18n.t('Tags')}
+            placeholder={i18n.t('Choose tags')}
             onChangeText={setTags}
             keyboardType='dropdown'
-            url={url.spendi.Tag}
+            url={url.spendi.Tag + '?query={id,name}'}
             many={true}
             value={tags}
           />
           <Input
-            label='Created By'
-            placeholder='Filter by User'
+            label={i18n.t('Created By')}
+            placeholder={i18n.t('Filter by User')}
             onChangeText={setUsers}
             keyboardType='dropdown'
-            url={url.User}
+            url={url.User + '?query={id,username,display_name}'}
             many={true}
             value={users}
             canCreate={false}
@@ -344,32 +372,36 @@ export default function Dashboard(props) {
             containerStyle={style.dateRangeContainer}>
             <Icon name='date' type='fontisto' color={colors.primary} size={30} />
             <ListItem.Content>
-              <ListItem.Title>Transaction Time Range</ListItem.Title>
-              <View style={[style.horizontal, { flex: 1, paddingTop: 4 }]}>
-                <TouchableOpacity onPress={() => showDatePicker('transaction_at__gte')} style={{ flexDirection: 'row' }} >
+              <ListItem.Title>{i18n.t('Transaction Time Range')}</ListItem.Title>
+              <View style={style.transactionTimeContainer}>
+                <TouchableOpacity onPress={() => showDatePicker('transaction_at__gte')} style={style.horizontal} >
                   <Text style={style.date}>
-                    {transaction_at__gte ? utils.formatDate(transaction_at__gte, 'll') : 'Start Date'}
+                    {transaction_at__gte ? utils.formatDate(transaction_at__gte, 'll') : i18n.t('Start Date')}
                     <Icon name='edit' type='antdesign' color={colors.primary} size={16} />
                   </Text>
                 </TouchableOpacity>
-                <Icon name='arrowright' type='antdesign' color={colors.primary} size={16} style={{ width: 40 }} />
-                <TouchableOpacity onPress={() => showDatePicker('transaction_at__lte')} style={{ flexDirection: 'row' }} >
-
+                <Icon name='arrowright' type='antdesign' color={colors.primary} size={16} style={style.arrowRight} />
+                <TouchableOpacity onPress={() => showDatePicker('transaction_at__lte')} style={style.horizontal} >
                   <Text style={style.date}>
-                    {transaction_at__lte ? utils.formatDate(transaction_at__lte, 'll') : 'End Date'}
+                    {transaction_at__lte ? utils.formatDate(transaction_at__lte, 'll') : i18n.t('End Date')}
                     <Icon name='edit' type='antdesign' color={colors.primary} size={16} />
                   </Text>
                 </TouchableOpacity>
-
               </View>
               <ListItem.Subtitle></ListItem.Subtitle>
             </ListItem.Content>
             <ListItem.Chevron />
           </ListItem>
-
+          <Button
+            title={i18n.t('Apply Filters')}
+            onPress={onCloseFilters}
+            textColor={colors.white}
+            icon='filter-outline'
+            buttonStyle={style.clearFiltersButton}
+          />
           {filtersLength > 0 &&
             <Button
-              title={`Clear all ${filtersLength} filters(s)`}
+              title={i18n.t('Clear all {count} filters', { count: filtersLength })}
               onPress={() => {
                 setTags([]);
                 setCategories([])
@@ -380,20 +412,51 @@ export default function Dashboard(props) {
                 setUsers([]);
               }}
               type='clear'
-              buttonStyle={{ marginVertical: 30 }}
+              // textColor={colors.white}
+              buttonStyle={style.clearFiltersButton}
             />}
-          <Button
-            title='Search'
-            onPress={onCloseFilters}
-          />
         </View>
       </Modal>}
+
+      <Modal
+        visible={isDownloadingVisible}
+        title={i18n.t('Download Transactions')}
+        modalHeight={0.5 * height}
+        containerStyle={style.p20}
+        extraProps={{
+          onClosed: () => setIsDownloadingVisible(false),
+        }}
+      >
+        <Text style={style.downloadInfoText}>
+          {isDownloading ? i18n.t('Please Wait') : i18n.t('You are about to download {count} transactions', { count })}</Text>
+        {!isDownloading && <Input
+          label={i18n.t('Report Title')}
+          placeholder={i18n.t('Enter Title')}
+          onChangeText={setReportTitle}
+          value={reportTitle}
+        />}
+        <Button
+          loading={isDownloading}
+          disabled={isDownloading}
+          title={i18n.t('Download Now')}
+          onPress={downloadData}
+          buttonStyle={style.mt20}
+          labelStyle={style.white}
+        />
+        <Button
+          title={i18n.t('Cancel')}
+          type='clear'
+          onPress={() => setIsDownloadingVisible(false)}
+          buttonStyle={style.mt20}
+        />
+      </Modal>
     </SafeAreaView>
   );
 }
 
 function RenderItem(props) {
   const navigation = useNavigation();
+  const { i18n } = useContext(LocalizationContext);
   const { item, onRefresh } = props;
   const { transaction_type = 'spending' } = item;
   const isSpending = transaction_type === 'spending'
@@ -403,22 +466,22 @@ function RenderItem(props) {
   };
   const onLongPressItem = () => {
     Alert.alert(
-      "Duplicate Transaction",
-      `Confirm action for: ${item.description}`,
-      [{ text: 'Cancel' },
+      i18n.t("Duplicate Transaction"),
+      i18n.t('Confirm duplicating {description}', item),
+      [{ text: i18n.t('Cancel') },
       {
-        text: 'Delete', onPress: async () => {
+        text: i18n.t('Delete'), onPress: async () => {
           try {
             await requests.delete(url.getURL('spendi.Transaction', { item, type: 'delete' }));
-            Alert.alert('Item Deleted', 'This transaction was deleted successfully');
+            Alert.alert(i18n.t('Item Deleted'), i18n.t('This transaction was deleted successfully'));
             onRefresh && onRefresh()
           } catch (error) {
-            Alert.alert('Error Deleting', JSON.stringify(error.data?.detail || error.message));
+            Alert.alert(i18n.t('Error Deleting'), JSON.stringify(error.data?.detail || error.message));
           }
         }
       },
       {
-        text: 'Duplicate', onPress: () => {
+        text: i18n.t('Duplicate'), onPress: () => {
           navigation.navigate('Transactions/Add', { itemId: item.id, duplicate: true });
         }
       },
@@ -426,12 +489,12 @@ function RenderItem(props) {
   };
 
   return (
-    <ListItem onLongPress={onLongPressItem} onPress={onPressItem} bottomDivider containerStyle={{ marginHorizontal: 8 }}>
+    <ListItem onLongPress={onLongPressItem} onPress={onPressItem} bottomDivider containerStyle={style.transactionContainer}>
       <Icon name={isSpending ? 'arrowup' : 'arrowdown'} type='antdesign' color={isSpending ? colors.warning : colors.primary} />
       <ListItem.Content>
         <ListItem.Title numberOfLines={1}>{item.description}</ListItem.Title>
         <ListItem.Subtitle numberOfLines={1}>
-          {item.tags.map(tag => tag.name).join(", ")}
+          {item.tags.map(tag => tag.name).join(", ") || item.category?.name}
         </ListItem.Subtitle>
       </ListItem.Content>
       <View>
@@ -443,13 +506,25 @@ function RenderItem(props) {
 }
 
 const style = StyleSheet.create({
-  flex1: {
-    flex: 1,
-  },
+  flex1: { flex: 1 },
+  arrowRight: { width: 40 },
+  mt20: { marginTop: 20 },
+  transactionContainer: { marginHorizontal: 8 },
+  mr15: { marginRight: 15 },
+  mr10: { marginRight: 10 },
+  p20: { padding: 20 },
+  white: { color: colors.white },
+  downloadInfoText: { paddingTop: 30, paddingBottom: 20, textAlign: 'center' },
+  greetingContainer: { marginLeft: 10 },
+  container1: { flexDirection: 'row', paddingTop: 10, justifyContent: 'space-between' },
+  spendingNumber: { fontSize: 16, fontWeight: 'bold', color: colors.danger },
+  incomeNumber: { fontSize: 16, fontWeight: 'bold', color: colors.black },
+  balanceNumber: { fontSize: 16, fontWeight: 'bold', color: colors.primary },
   noItemsContainer: { paddingHorizontal: 20, paddingTop: 50 },
+  noItemaddTransactionButton: { marginTop: 40 },
   subtitle: { padding: 4 },
   bold: { fontWeight: '700' },
-
+  clearFiltersButton: { marginTop: 30 },
   title: {
     fontSize: 17,
     fontWeight: 'bold',
@@ -463,20 +538,6 @@ const style = StyleSheet.create({
     paddingHorizontal: 10,
     marginBottom: 10,
     paddingVertical: 2,
-  },
-  ph10: {
-    paddingHorizontal: 10,
-  },
-  divider: {
-    paddingBottom: 10,
-  },
-  time: {
-    fontSize: 13,
-    color: 'grey'
-  },
-  horizontal: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
   },
   root: {
     flex: 1,
@@ -509,9 +570,34 @@ const style = StyleSheet.create({
   dateRangeContainer: {
     backgroundColor: colors.primary2,
     marginHorizontal: 6,
-    paddingVertical: 10
+    paddingVertical: 10,
+    marginBottom: 30,
   },
   date: {
     color: colors.grey
-  }
+  },
+  h15: { height: 15 },
+  filtersIconContainer: { flexDirection: 'row', marginTop: 10, marginRight: 10 },
+  searchIcon: { margin: 8, marginRight: 20 },
+  filtersText: { color: colors.primary, marginTop: -5 },
+  ph10: {
+    paddingHorizontal: 10,
+  },
+  divider: {
+    paddingBottom: 10,
+  },
+  time: {
+    fontSize: 13,
+    color: 'grey'
+  },
+  horizontal: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  transactionTimeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    flex: 1,
+    paddingTop: 4
+  },
 });

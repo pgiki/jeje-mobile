@@ -7,7 +7,7 @@ import {
   FlatList,
   Platform, TouchableOpacity,
 } from 'react-native';
-import { Text, SearchBar, ListItem, Icon } from 'react-native-elements';
+import { Text, SearchBar, ListItem, Icon } from '@rneui/themed';
 import { colors, utils, requests, url } from 'src/helpers';
 import _ from 'lodash';
 import { useNavigation } from '@react-navigation/native';

@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback, useRef, memo } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useContext } from 'react';
 import { TouchableOpacity, StyleSheet, View, Platform, Keyboard } from 'react-native';
-import { Text, Icon, Overlay, ListItem, SearchBar } from 'react-native-elements';
+import { Text, Icon, Overlay, ListItem, SearchBar } from '@rneui/themed';
 import { TextInput } from 'react-native-paper';
 import { colors, utils, font, DEBUG, requests, height, width } from 'src/helpers';
 import FastImage from 'react-native-fast-image';
@@ -8,8 +8,9 @@ import TextInputMask from 'react-native-text-input-mask';
 import { phoneMasks, countries, currencies } from 'src/helpers/constants';
 import { FlatList } from 'react-native-gesture-handler';
 import * as flags from 'src/assets/flags'
-import { Button } from './index';
+import { Button, ScrollView } from './index';
 import _ from 'lodash'
+import { LocalizationContext } from 'src/helpers';
 
 export function DropdownInput(props) {
   const {
@@ -25,6 +26,7 @@ export function DropdownInput(props) {
     canCreate = true,
   } = props;
 
+  const { i18n } = useContext(LocalizationContext)
   const [data, setData] = useState(props.data || [])
   const [isFocus, setIsFocus] = useState(false);
   const [searchText, setSearchText] = useState('');
@@ -34,12 +36,15 @@ export function DropdownInput(props) {
   const loggedUser = utils.getUser();
 
   useEffect(() => {
-    url && fetchData()
+    if (url) {
+      debounceFetchData(utils.stringify({ search: searchText }, { baseURL: url }));
+      return debounceFetchData.cancel
+    }
   }, [url, searchText])
 
   useEffect(() => {
     if (props.value && !_.isEqual(props.value, selectedItems)) {
-      setSelectedItems(Array.isArray(props.value) ? props.value : [props.value])
+      setSelectedItems(Array.isArray(props.value) ? props.value : [props.value]);
     }
   }, [props.value])
 
@@ -62,9 +67,12 @@ export function DropdownInput(props) {
     }
   }, [isModalVisible])
 
+  const debounceFetchData = useCallback(
+    _.debounce((link) => fetchData(link),
+      800), []);
 
-  async function fetchData() {
-    const res = await requests.get(url + `?search=${searchText}`)
+  async function fetchData(link) {
+    const res = await requests.get(link || utils.stringify({ search: searchText }, { baseURL: url }))
     const results = res[resultsField]
     setData(results)
   }
@@ -113,14 +121,35 @@ export function DropdownInput(props) {
   }
 
   return <View>
-    <TextInput
-      {...props}
-      keyboardType={undefined}
-      value={selectedItems.map(getLabel).join(", ")}
-      style={style.inputStyle}
-      onFocus={onFocus}
-      onBlur={onBlur}
-    />
+    {many && selectedItems.length > 0 ?
+      <View>
+        <TouchableOpacity
+          onPress={onFocus}
+          style={style.editSelectedItems}>
+          <Text>{props.label || props.placeholder}</Text>
+          <Icon name='edit' type='antdesign' />
+        </TouchableOpacity>
+        <ScrollView
+          horizontal={true}
+          contentContainerStyle={style.selectedItemsContainer1}
+        >
+          {selectedItems.map((item, index) => <TouchableOpacity
+            key={index}
+            onPress={() => onChange(item)}
+            style={style.selectedItemsItem}
+          >
+            <Text style={{ fontSize: 12, color: colors.grey, paddingVertical: 4 }}>{getLabel(item)} <Icon name='close' type='antdesign' size={10} color={colors.grey} /></Text>
+          </TouchableOpacity>)}
+        </ScrollView>
+      </View>
+      : <TextInput
+        {...props}
+        keyboardType={undefined}
+        value={selectedItems.map(getLabel).join(", ")}
+        style={style.inputStyle}
+        onFocus={onFocus}
+        onBlur={onBlur}
+      />}
     <Overlay
       isVisible={isModalVisible}
       overlayStyle={style.dropdownOverlay}
@@ -128,13 +157,13 @@ export function DropdownInput(props) {
     >
       <View>
         <TouchableOpacity
-          style={{ position: 'absolute', top: -5, right: 0, zIndex: 99 }}
+          style={style.overlayCloseButton}
           onPress={() => setIsModalVisible(false)}>
           <Icon name='close-o' type='evilicon' size={35} color={colors.grey} />
         </TouchableOpacity>
         <SearchBar
           platform={'android'}
-          placeholder={placeholder || 'Search...'}
+          placeholder={placeholder || i18n.t('Search')}
           onChangeText={text => setSearchText(text)}
           value={searchText}
           containerStyle={style.countrySearch}
@@ -144,9 +173,26 @@ export function DropdownInput(props) {
           cancelIcon={{ name: 'undo', type: 'evilicon', size: 30 }}
         />
       </View>
+      {selectedItems.length > 0 &&
+        <ScrollView horizontal={true}
+          contentContainerStyle={style.selectedItemsContainer}
+        >
+          {selectedItems.map((item, index) => <TouchableOpacity
+            key={index}
+            onPress={() => onChange(item)}
+            style={style.selectedItemsItem}
+          >
+            <Text>{getLabel(item)} <Icon name='close' type='antdesign' size={12} color={colors.grey} /></Text>
+          </TouchableOpacity>)}
+        </ScrollView>}
       <FlatList
         data={data}
         keyExtractor={utils.keyExtractor}
+        ListEmptyComponent={!searchText ? <View style={style.emptyOverlayList}>
+          <Text>
+            {i18n.t('Click and start typing on search bar to create items which do not exist yet')}
+          </Text>
+        </View> : undefined}
         renderItem={({ item, index }) => {
           const isChecked = selectedItems.map(item => item.id).includes(item.id)
           return (<ListItem
@@ -165,11 +211,14 @@ export function DropdownInput(props) {
             {isChecked && <Icon name="check" type='antdesign' color={colors.primary} />}
           </ListItem>)
         }}
+
         ListFooterComponent={(!!searchText && canCreate) ? <Button
-          title={`Create: ${searchText}`}
+          title={i18n.t('Create {searchText}', { searchText })}
           loading={loading}
+          style={style.mt40}
           onPress={onCreate}
-          labelStyle={style.buttonLabelText}
+          type='solid'
+          textColor={colors.white}
         /> : undefined}
       />
     </Overlay>
@@ -637,4 +686,31 @@ const style = StyleSheet.create({
     borderTopRightRadius: 20,
     borderTopLeftRadius: 20
   },
+  editSelectedItems: {
+    flexDirection: 'row',
+    flex: 1,
+    paddingBottom: 10,
+    paddingLeft: 6,
+    // justifyContent: 'space-between',
+  },
+  selectedItemsContainer1: {
+    marginBottom: 15,
+    marginHorizontal: 6,
+  },
+  selectedItemsContainer: {
+    marginBottom: 10,
+    height: 30
+  },
+  selectedItemsItem: {
+    borderColor: colors.grey,
+    marginRight: 5,
+    paddingTop: 3,
+    textAlign: 'center',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+  },
+  overlayCloseButton: { position: 'absolute', top: -5, right: 0, zIndex: 99 },
+  mt40: { marginTop: 40 },
+  emptyOverlayList: { flex: 1, marginVertical: 50, paddingHorizontal: 10 },
 });

@@ -1,14 +1,13 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useRef, useEffect, useReducer } from 'react';
+import React, { useRef, useEffect, useReducer, useContext } from 'react';
 import {
     View,
     StyleSheet,
     TouchableOpacity,
 } from 'react-native';
-import { Text, Button } from 'react-native-elements';
+import { Text, Button } from '@rneui/themed';
 import useState from 'react-usestateref';
-import { colors, utils, requests, url, width} from 'src/helpers';
-import _ from 'lodash';
+import { colors, utils, requests, url, width, LocalizationContext } from 'src/helpers';
 import { PhoneInput } from 'src/components/Input';
 import OtpInputs from 'react-native-otp-inputs';
 import auth from '@react-native-firebase/auth';
@@ -29,14 +28,14 @@ function resendOTPAfterSecReducer(state, action) {
     return newState;
 }
 
-
 export default function VerifyPhone(props) {
-    const {navigation, route} = props;
+    const { navigation, route } = props;
+    const { i18n } = useContext(LocalizationContext);
     const [loggedUser] = useState(utils.getUser());
     const [otp, setOtp] = useState();
     const [success, setSuccess] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
-    const [alert, setAlert] = useState({ type: 'info', message: 'Please wait for OTP to be sent..' });
+    const [alert, setAlert] = useState({ type: 'info', message: i18n.t('Please wait for OTP to be sent') });
     const [phone, setPhone] = useState(loggedUser?.username); //""
     const [isPhoneValid, setIsPhoneValid] = useState(phone?.length === 13);
     const [confirm, setConfirm] = useState(null);
@@ -56,7 +55,7 @@ export default function VerifyPhone(props) {
 
     async function verify({ isVerified = false, code } = {}) {
         if (!isPhoneValid || phone?.length < 11) {
-            setErrorMessage('This phone number is not valid');
+            setErrorMessage(i18n.t('This phone number is not valid'));
         } else {
             if (authenticationType === 'firebase' && !isVerified) {
                 firebaseVerify();
@@ -88,7 +87,7 @@ export default function VerifyPhone(props) {
             try {
                 const res = await requests.post(url.User + 'request_otp/', { phone });
                 if (res.success) {
-                    setAlert({ message: 'Check your message for verification code', type: 'info' });
+                    setAlert({ message: i18n.t('Check your message for verification code'), type: 'info' });
                     focusOTP();
                 } else {
                     if (res.errors?.length > 0) {
@@ -110,7 +109,7 @@ export default function VerifyPhone(props) {
             const confirmation = await auth().signInWithPhoneNumber(phone);
             setConfirm(confirmation);
             // const masked = '**********' + phone.substr(-4); // eg ************3456
-            setAlert({ message: `The OTP was sent to your phone number ${phone}`, type: 'info' });
+            setAlert({ message: i18n.t('The OTP was sent to your phone number {phone}', { phone }), type: 'info' });
             setErrorMessage('');
             focusOTP();
         } catch (e) {
@@ -128,7 +127,7 @@ export default function VerifyPhone(props) {
             if (confirm) {
                 await confirm.confirm(otp);
                 setErrorMessage('');
-                setAlert({ message: 'All clear. OTP confirmed. Waiting for further verification...', type: 'info' });
+                setAlert({ message: i18n.t('auth_verifyphone_success_message'), type: 'info' });
                 setTimeout(() => {
                     // confirm the otp remotely too
                     verify({ isVerified: true, code: `firebase-${otp}` });
@@ -138,7 +137,7 @@ export default function VerifyPhone(props) {
                 setAuthenticationType('sms');
             }
         } catch (error) {
-            setErrorMessage(error.message || 'Invalid OTP. Please try again');
+            setErrorMessage(error.message || i18n.t('Invalid OTP'));
             setAlert({});
         }
     }
@@ -158,7 +157,7 @@ export default function VerifyPhone(props) {
         if (loggedUser?.is_phone_verified || success) {
             if (success && !loggedUser?.currency) {
                 // go to profile and edit currency and other details
-                navigation.replace('Auth/Profile', {})
+                navigation.replace('Auth/Profile', {});
             } else {
                 navigation.replace('Home', {});
             }
@@ -199,22 +198,22 @@ export default function VerifyPhone(props) {
 
     const onContactSupport = () => {
         utils.requireLogin(
-          () => {
-            utils.privateChat({
-              navigation,
-              name: 'Customer Care',
-              users: [loggedUser, { id: 19, username: 'admin' }],
-            });
-          },
-          navigation,
-          route,
+            () => {
+                utils.privateChat({
+                    navigation,
+                    name: i18n.t('Customer Care'),
+                    users: [loggedUser, { id: 19, username: 'admin' }],
+                });
+            },
+            navigation,
+            route,
         );
-      };
+    };
 
     return <View style={style.root}>
         <View style={style.card}>
             <PhoneInput
-                label={'Phone Number'}
+                label={i18n.t('Phone Number')}
                 defaultValue={phone}
                 onChange={({ valid, formattedValue, value }) => {
                     setPhone(value);
@@ -224,7 +223,7 @@ export default function VerifyPhone(props) {
             // errorMessage={phoneError}
             />
             <View style={style.otpContainer}>
-                <Text style={style.verificationCodeTitle}>Verification Code</Text>
+                <Text style={style.verificationCodeTitle}>{i18n.t('Verification Code')}</Text>
                 <OtpInputs
                     keyboardType="phone-pad"
                     handleChange={(code) => setOtp(code)}
@@ -238,20 +237,20 @@ export default function VerifyPhone(props) {
                 />
                 {!!errorMessage && <Text style={style.errorMessage}>{errorMessage}</Text>}
                 <Button
-                    title={canResendOTP ? 'Resend OTP' : `Resend After ${resendOTPAfterSec} sec`}
+                    title={canResendOTP ? i18n.t('Resend OTP') : i18n.t('Resend After {resendOTPAfterSec} sec', { resendOTPAfterSec })}
                     onPress={requestOTP}
                     disabled={!canResendOTP}
                     type="outline"
                 />
                 {!!alert?.message && <Text style={style.alertText}>{alert.message}</Text>}
             </View>
-            {isPhoneValid && otp?.length === 6 && <Button title="Verify" onPress={verify} containerStyle={style.verifyContainer} />}
+            {isPhoneValid && otp?.length === 6 && <Button title={i18n.t('Verify')} onPress={verify} containerStyle={style.verifyContainer} />}
             {canResendOTP && <TouchableOpacity style={style.contactSupport} onPress={onContactSupport}>
-                <Text>OTP not received? <Text style={style.underline}>Contact Support</Text></Text>
+                <Text>{i18n.t('OTP not received?')} <Text style={style.underline}>{i18n.t('Contact Support')}</Text></Text>
             </TouchableOpacity>}
         </View>
- 
-        <Button type="outline" title={'Logout'} onPress={logout} containerStyle={style.logout} />
+
+        <Button type="outline" title={i18n.t('Logout')} onPress={logout} containerStyle={style.logout} />
     </View>;
 }
 
@@ -261,12 +260,21 @@ const style = StyleSheet.create({
         paddingTop: 0,
         // backgroundColor:"white",
     },
-    contactSupport:{
-        alignItems:"center", marginTop:20
+    contactSupport: {
+        alignItems: 'center',
+        marginTop: 20,
     },
-    underline:{textDecorationLine:"underline"},
-    alertText: { color: 'white', marginTop: 20 },
-    errorMessage: { color: 'orange', marginVertical: 10 },
+    underline: {
+        textDecorationLine: 'underline'
+    },
+    alertText: {
+        color: 'white',
+        marginTop: 20
+    },
+    errorMessage: {
+        color: 'orange',
+        marginVertical: 10
+    },
     phoneInput: {
         fontSize: 22,
         paddingLeft: 10,

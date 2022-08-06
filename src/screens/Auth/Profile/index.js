@@ -1,11 +1,11 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import {
   StyleSheet,
   ScrollView, Platform,
   View, KeyboardAvoidingView,
 } from 'react-native';
-import { Text, Icon, Button } from 'react-native-elements';
+import { Text, Button } from '@rneui/themed';
 import Input from 'src/components/Input';
 import {
   utils,
@@ -14,6 +14,7 @@ import {
   colors,
   font,
   url,
+  LocalizationContext
 } from 'src/helpers';
 import { useForm, Controller } from 'react-hook-form';
 
@@ -22,6 +23,7 @@ export default function ProfileEdit(props) {
     navigation,
     route: { params = {} },
   } = props;
+  const { i18n } = useContext(LocalizationContext);
   const loggedUser = utils.getUser();
   const itemType = 'User';
   const [action, setAction] = useState(params?.action || 'change');
@@ -35,14 +37,9 @@ export default function ProfileEdit(props) {
 
   const actionMap = {
     change: {
-      action: 'Update Profile',
-      help: 'Click below to save the updated data',
+      action: i18n.t('Update Profile'),
+      help: i18n.t('Click below to save the updated data'),
       actions: ['forgotPassword', 'create'],
-    },
-    create: {
-      help: 'A portfolio is an easy way to you to manage your funds when you share with friends',
-      action: 'Create Profile',
-      actions: ['change'],
     },
   };
   const actionName = actionMap[action].action;
@@ -58,30 +55,30 @@ export default function ProfileEdit(props) {
   const inputs = [
     [
       {
-        placeholder: 'Username',
-        label: 'Username',
+        placeholder: i18n.t('Username'),
+        label: i18n.t('Username'),
         name: 'username',
         editable: false,
         actions: ['create', 'change'],
-        rules: { required: true, message: 'The name is important' },
+        rules: { required: true, message: i18n.t('The name is important') },
         // leftIcon:{name:"envelope", color:"black", type:"evilicon"}
       },
     ],
     [
       {
-        placeholder: 'First Name',
-        label: 'First Name',
+        placeholder: i18n.t('First Name'),
+        label: i18n.t('First Name'),
         name: 'first_name',
 
         actions: ['create', 'change'],
-        rules: { required: true, message: 'The name is important' },
+        rules: { required: true, message: i18n.t('The name is important') },
         // leftIcon:{name:"envelope", color:"black", type:"evilicon"}
       },
     ],
     [
       {
-        placeholder: 'Last Name',
-        label: 'Last Name',
+        placeholder: i18n.t('Last Name'),
+        label: i18n.t('Last Name'),
         name: 'last_name',
         actions: ['create', 'change'],
         rules: { required: false },
@@ -90,10 +87,10 @@ export default function ProfileEdit(props) {
     ],
     [
       {
-        placeholder: 'Enter Email',
-        label: 'Email',
+        placeholder: i18n.t('Enter Email'),
+        label: i18n.t('Email'),
         name: 'email',
-        assistiveText: 'Required to reset password and other communications',
+        assistiveText: i18n.t('Required to reset password and other communications'),
         actions: ['create', 'change'],
         rules: { required: false },
         // leftIcon:{name:"envelope", color:"black", type:"evilicon"}
@@ -101,8 +98,8 @@ export default function ProfileEdit(props) {
     ],
     [
       {
-        placeholder: 'Select Currency',
-        label: 'Currency',
+        placeholder: i18n.t('Select Currency'),
+        label: i18n.t('Currency'),
         name: 'currency',
         keyboardType: 'currency-options',
         multiline: true,
@@ -116,8 +113,6 @@ export default function ProfileEdit(props) {
   const validation = {};
 
   const {
-    register,
-    setValue,
     handleSubmit,
     control,
     reset,
@@ -186,7 +181,7 @@ export default function ProfileEdit(props) {
     let error = errors[key];
     if (error) {
       const msg = error.message || error.type;
-      return msg === 'required' ? 'This field is required' : msg;
+      return msg === 'required' ? i18n.t('This field is required') : msg;
     } else {
       return null;
     }
@@ -244,12 +239,11 @@ export default function ProfileEdit(props) {
           {!!generalError && (
             <Text style={style.errorText}>{generalError}</Text>
           )}
-
           <Text style={style.helpText}>{helpText}</Text>
           <View style={style.actionNameContainer}>
             <Text style={style.actionNameText}>{actionName}</Text>
             <Button
-              title="Submit"
+              title={i18n.t('Submit')}
               buttonStyle={style.arrowRightContainer}
               disabled={loading}
               onPress={handleSubmit(onSubmit)}

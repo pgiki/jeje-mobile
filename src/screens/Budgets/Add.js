@@ -10,7 +10,7 @@ import Input from 'src/components/Input'
 import { Button, ScrollView, } from 'src/components';
 import { Snackbar, Text } from 'react-native-paper'
 import SwitchSelector from "react-native-switch-selector";
-import { Icon, ListItem } from 'react-native-elements';
+import { Icon, ListItem } from '@rneui/themed';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 
 export default function BudgetsAdd(props) {

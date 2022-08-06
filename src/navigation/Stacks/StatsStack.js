@@ -12,10 +12,10 @@ export function StatsStack() {
     <Stack.Navigator initialRouteName={initialRoute}>
       <Stack.Group>
         <Stack.Screen
-          name="Summary"
+          name="Statistics"
           component={Stats}
           options={({ route, navigation }) => ({
-            title: 'Summary',
+            title: 'Statistics',
           })}
         />
       </Stack.Group>

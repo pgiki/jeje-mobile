@@ -24,6 +24,8 @@ import { storage } from './storage';
 const customParseFormat = require('dayjs/plugin/customParseFormat');
 const relativeTime = require('dayjs/plugin/relativeTime');
 const duration = require('dayjs/plugin/duration');
+const localeData = require('dayjs/plugin/localeData')
+dayjs.extend(localeData); //for listing days/month
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
 dayjs.extend(customParseFormat);
@@ -347,7 +349,7 @@ class Actions {
   };
 
   stringify = (data, params = {}) => {
-    let link = qs.stringify(data, { arrayFormat: 'bracket', ...params });
+    let link = qs.stringify(data, { arrayFormat: 'bracket', skipNull: true, skipEmptyString: true, ...params });
     if (params.baseURL) {
       link = `${params.baseURL}${params.baseURL?.includes('?') ? '&' : '?'
         }${link}`;

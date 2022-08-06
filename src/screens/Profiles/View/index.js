@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from 'react';
-import { Avatar, Button, Icon, ListItem, Text } from 'react-native-elements';
+import { Avatar, Button, Icon, ListItem, Text } from '@rneui/themed';
 import { StyleSheet, TouchableOpacity, View, Alert } from 'react-native';
 import { requests, url } from 'src/helpers';
 import { ScrollView } from 'react-native-gesture-handler';

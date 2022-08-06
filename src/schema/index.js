@@ -1,6 +1,6 @@
 import minifier from 'string-minify';
 
-const schema={
+const schema = {
   listings: minifier(`{
       id,price,price_currency,min_payment_months_count,
       bedrooms_count,master_bedrooms_count,
@@ -15,14 +15,23 @@ const schema={
         name,lat,lng
       }
    }`),
-   message:minifier(
-     `{
+  message: minifier(
+    `{
         _id, id,text,image, video, createdAt:created,sent,pending
         user{
           _id:id,name:first_name,
         },
       }
-  `)
+  `),
+  transaction: minifier(
+    `{
+       id,description,amount,amount_currency,transaction_at,transaction_type
+       tags{
+         id,name
+       },
+       category{name}
+     }
+ `)
 }
 
 /*

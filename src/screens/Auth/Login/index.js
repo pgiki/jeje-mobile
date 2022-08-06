@@ -1,13 +1,12 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import {
   StyleSheet,
   TouchableOpacity,
   ScrollView, Platform,
-  View, KeyboardAvoidingView
+  View, KeyboardAvoidingView, StatusBar,
 } from 'react-native';
-import Image from 'react-native-fast-image';
-import { Text, } from 'react-native-paper';
+import { Text, Button, Image, Icon } from '@rneui/themed';
 import { useRecoilState } from 'recoil';
 import { localNotificationState } from 'src/atoms';
 import {
@@ -19,66 +18,72 @@ import {
   setAuthorization,
   colors,
   font,
-  url,
+  url, LocalizationContext,
 } from 'src/helpers';
 import Input, { PhoneInput } from 'src/components/Input';
-import { Button } from 'src/components';
 import { useForm, Controller } from 'react-hook-form';
 import Onboarding from 'react-native-onboarding-swiper';
-import logo from 'src/assets/logo.png'
-import FastImage from 'react-native-fast-image';
-import { appName } from 'src/helpers';
+import Modal from 'src/components/Modal';
 
 export default function Login(props) {
   const {
     navigation,
     route: { params = {} },
   } = props;
+  const { i18n, setAppLanguage, appLanguage } = useContext(LocalizationContext);
+  const [isLanguageModalVisible, setIsLanguageModalVisible] = useState(false);
   const [, setLocalNotification] = useRecoilState(localNotificationState);
   const [action, setAction] = useState(params?.action || 'signup');
   const [generalError, setGeneralError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(true);
 
+  useEffect(() => {
+    // dummy state update to refresh page
+    setGeneralError('');
+  }, [appLanguage]);
+
   function readTnC() {
-    utils.openURL(url.tnc);
+    navigation.navigate('Web', { uri: url.tnc, title: i18n.t('Terms and Conditions') });
   }
 
   const actionMap = {
     login: {
-      title: 'Sign In',
-      action: 'Sign In',
-      actionTeaser: 'Already have an account?',
-      subtitle: 'Welcome Back. We missed you!',
+      title: i18n.t('Sign In'),
+      action: i18n.t('Sign In'),
+      actionTeaser: i18n.t('Already have an account?'),
+      subtitle: i18n.t('auth_login_we_missed_you'),
       actions: ['signup'],
-      help: <Text style={style.grey} onPress={() => setAction('forgotPassword')}>Forgot password? <Text style={style.underline}>Reset</Text></Text>,
+      help: <Text style={style.grey} onPress={() => setAction('forgotPassword')}>
+        {i18n.t('Forgot password?')} <Text style={style.underline}>{i18n.t('Reset')}</Text></Text>,
     },
     signup: {
-      title: 'Track every penny',
-      subtitle: 'Join today and know where your money goes',
+      title: i18n.t('appName'),
+      subtitle: i18n.t('Whenever you spend or earn we make it easy for you to save and share'),
       help: <Text onPress={readTnC}>
-        By signing up you agree to <Text onPress={readTnC} style={style.link}>our terms and conditions</Text></Text>,
-      actionTeaser: 'You are new here?',
-      action: 'Sign Up',
+        {i18n.t('By signing up you agree to our terms and conditions')}
+      </Text>,
+      actionTeaser: i18n.t('You are new here?'),
+      action: i18n.t('Sign Up'),
       actions: ['login'],
     },
     forgotPassword: {
-      subtitle: 'You are not alone. This happens to the best of us',
-      help: 'An email with a security code will be sent to you',
-      action: 'Forgot Password',
-      title: 'Forgot Password',
+      subtitle: i18n.t('auth_forget_password_not_alone'),
+      help: i18n.t('An email with a security code will be sent to you'),
+      action: i18n.t('Forgot Password'),
+      title: i18n.t('Forgot Password'),
       actions: ['login', 'signup'],
     },
     resetPassword: {
-      help: 'An email with security code was sent to your email. Input it and set a new password',
-      action: 'Reset Password',
-      title: 'Reset Password',
+      help: i18n.t('auth_reset_password_help_text'),
+      action: i18n.t('Reset Password'),
+      title: i18n.t('Reset Password'),
       actions: ['login', 'signup'],
     },
     introduction: {
-      help: 'A billion reasons why you should choose us',
-      action: 'Introduction',
-      title: 'Introduction',
+      help: i18n.t('A billion reasons why you should choose us'),
+      action: i18n.t('Introduction'),
+      title: i18n.t('Introduction'),
       actions: ['login', 'signup'],
     },
   };
@@ -96,16 +101,15 @@ export default function Login(props) {
   useEffect(() => {
     navigation.setOptions({
       title: showOnboarding ? '' : actionMap[action].title,
-      headerShown: !showOnboarding,
     });
     setGeneralError('');
-  }, [action, showOnboarding]);
+  }, [action, showOnboarding, appLanguage]);
 
   const inputs = [
     [
       {
-        placeholder: 'First Name',
-        label: 'First Name',
+        placeholder: i18n.t('First Name'),
+        label: i18n.t('First Name'),
         name: 'first_name',
         actions: ['signup'],
         rules: { required: true },
@@ -114,8 +118,8 @@ export default function Login(props) {
     ],
     [
       {
-        placeholder: 'Last Name',
-        label: 'Last Name',
+        placeholder: i18n.t('Last Name'),
+        label: i18n.t('Last Name'),
         name: 'last_name',
         actions: ['signup'],
         rules: { required: true },
@@ -123,18 +127,18 @@ export default function Login(props) {
       },
     ],
     [{
-      placeholder: 'Enter Email',
-      label: 'Email',
+      placeholder: i18n.t('Enter Email'),
+      label: i18n.t('Email'),
       name: 'email',
       autoCapitalize: 'none',
       actions: ['forgotPassword'],
-      assistiveText: action === 'signup' ? 'Will be required to reset your password' : undefined,
+      assistiveText: action === 'signup' ? i18n.t('Will be required to reset your password') : undefined,
       rules: { required: false },
       // leftIcon:{name:"envelope", color:"black", type:"evilicon"}
     }],
     {
-      placeholder: 'Enter Phone',
-      // label: 'Phone Number',
+      placeholder: i18n.t('Phone'),
+      // label: i18n.t('Phone Number'),
       name: 'username',
       autoCapitalize: 'none',
       keyboardType: 'phone-pad',
@@ -143,8 +147,8 @@ export default function Login(props) {
       // leftIcon:{name:"envelope", color:"black", type:"evilicon"}
     },
     [{
-      placeholder: 'Enter OTP',
-      label: 'Security Code',
+      placeholder: i18n.t('Enter OTP'),
+      label: i18n.t('Security Code'),
       name: 'otp',
       autoCapitalize: 'none',
       keyboardType: 'decimal-pad',
@@ -154,8 +158,8 @@ export default function Login(props) {
     }],
     [
       {
-        placeholder: 'Enter Password',
-        label: 'Password',
+        placeholder: i18n.t('Enter Password'),
+        label: i18n.t('Password'),
         name: 'password',
         autoCapitalize: 'none',
         togglePassword: true,
@@ -163,13 +167,13 @@ export default function Login(props) {
         secureTextEntry: true,
         actions: ['login', 'signup', 'resetPassword'],
         rules: { required: true, minLength: 4 },
-        customShowPasswordComponent: <Text>Show</Text>,
-        customHidePasswordComponent: <Text>Hide</Text>,
+        customShowPasswordComponent: <Text>{i18n.t('Show')}</Text>,
+        customHidePasswordComponent: <Text>{i18n.t('Hide')}</Text>,
         // leftIcon:{name:"key-outline", color:"black", type:"ionicon"}
       },
       {
-        placeholder: 'Confirm',
-        label: 'Confirmation',
+        placeholder: i18n.t('Confirm'),
+        label: i18n.t('Confirmation'),
         name: 'password2',
         autoCapitalize: 'none',
         secureTextEntry: true,
@@ -181,27 +185,27 @@ export default function Login(props) {
   ];
 
   const validation = {
-    first_name: { required: { value: true, message: 'First name is required' } },
-    last_name: { required: { value: true, message: 'Last name is required' } },
+    first_name: { required: { value: true, message: i18n.t('First name is required') } },
+    last_name: { required: { value: true, message: i18n.t('Last name is required') } },
     email: {
-      required: { value: true, message: 'Email is required' },
+      required: { value: true, message: i18n.t('Email is required') },
       pattern: {
         value:
           /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
-        message: 'Invalid Email Format',
+        message: i18n.t('Invalid Email Format'),
       },
     },
     username: {
-      required: { value: true, message: 'Phone number is required' },
-      minLength: { value: 10, message: 'Invalid phone number' },
+      required: { value: true, message: i18n.t('Phone number is required') },
+      minLength: { value: 10, message: i18n.t('Invalid phone number') },
     },
     password: {
-      required: { value: true, message: 'Password is required' },
-      minLength: { value: 4, message: 'Password must be at least 4 characters' },
+      required: { value: true, message: i18n.t('Password is required') },
+      minLength: { value: 4, message: i18n.t('Password must be at least 4 characters') },
     },
     password2: {
-      required: { value: true, message: 'Confirm password' },
-      validate: value => value === getValues('password') || 'Passwords do not match',
+      required: { value: true, message: i18n.t('Confirm password') },
+      validate: value => value === getValues('password') || i18n.t('Passwords do not match'),
     },
   };
 
@@ -215,13 +219,9 @@ export default function Login(props) {
   };
 
   const {
-    register,
-    setValue,
     getValues,
-    setError,
     handleSubmit,
     control,
-    reset,
     formState: { errors },
   } = useForm({ defaultValues: {} }, validation);
 
@@ -239,7 +239,7 @@ export default function Login(props) {
       if (nextPage) {
         navigation.navigate(nextPage, nextParams);
       } else {
-        navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Dashboard');
+        navigation.canGoBack() && navigation.goBack()
       }
     }
   };
@@ -254,7 +254,8 @@ export default function Login(props) {
 
   const onSubmit = async data => {
     const onError = error => {
-      setGeneralError(error.message?.includes('Server') ? 'An ccount for this number already exists. Login instead' : JSON.stringify(error.data || error.message));
+      let non_field_errors = error.data?.non_field_errors.join('; ');
+      setGeneralError(error.message?.includes('Server') ? i18n.t('An account for this number already exists') : non_field_errors || JSON.stringify(error.data || error.message));
     };
     if (action === 'signup') {
       try {
@@ -332,54 +333,90 @@ export default function Login(props) {
     setAction('login');
     onDoneTour();
   }
+  function changeLanguage(langCode) {
+    setAppLanguage(langCode);
+    setTimeout(() => setIsLanguageModalVisible(false), 10);
+  }
 
   return (
     <View style={style.root}>
       {showOnboarding ? <>
+        <StatusBar backgroundColor={'transparent'} />
         <Onboarding
           bottomBarColor={'white'}
           bottomBarHighlight={true}
           onDone={onDoneTour}
           onSkip={onDoneTour}
-          // containerStyles={style.onboard}
-          // subTitleStyles={style.subTitleStyles}
-          // titleStyles={style.titleStyles}
+          containerStyles={style.onboard}
+          subTitleStyles={style.subTitleStyles}
+          titleStyles={style.titleStyles}
           skipLabel={''}
           nextLabel={''}
           pages={[
             {
               backgroundColor: '#fff',
               image: <Image
-                source={require('src/assets/onboarding/p2p.jpg')}
+                source={require('src/assets/onboarding/slider1.png')}
                 style={style.onboardImage}
                 resizeMode="contain"
               />,
-              title: 'P2P Lending & Borrowing',
-              subtitle: 'Connect with people from your contacts to know who can offer you a quick loan.',
+              title: i18n.t('Easy to save'),
+              subtitle: i18n.t('Record your transaction data with no hustle'),
             },
             {
               backgroundColor: '#fff',
               image: <Image
-                source={require('src/assets/onboarding/loanPortifolio.gif')}
+                source={require('src/assets/onboarding/slider2.png')}
                 style={style.onboardImage}
                 resizeMode="contain"
               />,
-              title: 'Loan Portfolio',
-              subtitle: 'Create groups and choose who sees your loan offering portfolio',
+              title: i18n.t('Easy to Scan'),
+              subtitle: i18n.t('Scan and save product barcodes or supported official receipts'),
+            },
+            {
+              backgroundColor: '#fff',
+              image: <Image
+                source={require('src/assets/onboarding/slider3.png')}
+                style={style.onboardImage}
+                resizeMode="contain"
+              />,
+              title: i18n.t('Easy to Share'),
+              subtitle: i18n.t('Suitable for small and medium businesses where multiple people needs to track expenses'),
             },
           ]}
         />
+
         <View style={style.actionButtons}>
-          <Button title={'Sign Up'} type={'solid'} onPress={onDoneTour} labelStyle={style.white} />
+          <Button title={i18n.t('Sign Up').toUpperCase()}
+            type={'solid'} onPress={onDoneTour}
+            buttonStyle={style.loginSignupButton}
+          />
           <View style={style.actionButtonDivider} />
-          <Button title={'Log In'} type="outline" onPress={login} />
+          <Button
+            title={i18n.t('Log In').toUpperCase()}
+            type="outline"
+            onPress={login}
+            buttonStyle={style.loginSignupButton}
+          />
+          <TouchableOpacity onPress={() => setIsLanguageModalVisible(true)}>
+            <Text style={style.changeLanguageText}>
+              {i18n.t('Change Language')}
+            </Text>
+            <Icon name="chevron-down" type="entypo"
+              size={14} color={colors.grey}
+            />
+          </TouchableOpacity>
         </View>
       </> :
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <KeyboardAvoidingView
+          style={style.flex1}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <StatusBar backgroundColor={colors.primary} />
           <ScrollView>
-
-            <FastImage source={logo} style={style.logo} resizeMode='contain' />
-
+            <View>
+              {/* <FastImage source={logo} style={style.logo} /> */}
+              {/* <Text style={style.appName}>{i18n.t('appName')}</Text> */}
+            </View>
             <Text style={style.subtitleText}>{subtitle}</Text>
             <View style={style.container}>
               {inputs
@@ -408,7 +445,6 @@ export default function Login(props) {
                               }
                             }}
                             style={style.phoneInput}
-                            placeholder={'Enter Phone Number'}
                           // errorMessage={getErrorMessage(input.name)}
                           />
                         )}
@@ -459,11 +495,10 @@ export default function Login(props) {
               <Text style={style.helpText}>{helpText}</Text>
               <Button
                 disabled={loading}
-                loading={loading}
                 buttonStyle={style.submitButton}
                 onPress={handleSubmit(onSubmit)}
-                title={(loading ? 'Wait...' : actionName)}
-                labelStyle={style.white}
+                loading={loading}
+                title={(loading ? i18n.t('Please Wait') : actionName.toUpperCase())}
               />
               <View style={style.otherActionsContainer}>
                 {otherActions
@@ -482,9 +517,36 @@ export default function Login(props) {
                     </TouchableOpacity>
                   ))}
               </View>
+              <TouchableOpacity
+                // style={{position: 'absolute', bottom:-, alignSelf:'center'}}
+                onPress={() => setIsLanguageModalVisible(true)}>
+                <Text style={style.changeLanguageText}>
+                  {i18n.t('Change Language')}
+                </Text>
+                <Icon name="chevron-down" type="entypo"
+                  size={14} color={colors.grey}
+                />
+              </TouchableOpacity>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>}
+      <Modal
+        title={i18n.t('Language')}
+        subtitle={i18n.t('Set Language')}
+        modalHeight={0.4 * height}
+        visible={isLanguageModalVisible}
+        extraProps={{
+          onClosed: () => setIsLanguageModalVisible(false),
+        }}
+      >
+        {i18n.getAvailableLanguages().map((langCode, index) => <Button
+          title={i18n.t(langCode)}
+          onPress={() => changeLanguage(langCode)}
+          key={index}
+          type={langCode === appLanguage ? 'solid' : 'outline'}
+          containerStyle={style.languageContainer}
+        />)}
+      </Modal>
     </View>
   );
 }
@@ -494,20 +556,17 @@ const style = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.white,
   },
-
+  flex1: {
+    flex: 1,
+  },
   onboard: {
     padding: 10,
     width,
-
   },
   onboardImage: {
-    height: 0.4 * width,
+    height: 0.5 * width,
     width: 0.6 * width,
     padding: 0,
-  },
-  logo: {
-    width: 100,
-    height: 100
   },
   subtitleText: {
     paddingHorizontal: 25,
@@ -524,7 +583,6 @@ const style = StyleSheet.create({
   horizontal: {
     flexDirection: 'row',
   },
-  white: { color: 'white' },
   horizontalSpaceBtn: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -539,6 +597,7 @@ const style = StyleSheet.create({
     fontSize: 16,
     textDecorationLine: 'underline',
   },
+  loginSignupButton: { borderWidth: 2.5, borderRadius: 6 },
   otherActionsContainer: {
     // flexDirection: 'row-reverse',
     // justifyContent: 'space-between',
@@ -547,7 +606,7 @@ const style = StyleSheet.create({
     paddingTop: 15,
     alignSelf: 'center',
     alignItems: 'center',
-    width: "100%",
+    width: '100%',
     // backgroundColor: colors.backgroundColor2,
   },
   divider: { paddingVertical: 10 },
@@ -556,7 +615,7 @@ const style = StyleSheet.create({
     marginTop: 50,
     marginHorizontal: 10,
     minWidth: 100,
-    // height: 40,
+    height: 40,
     borderRadius: 10,
     alignItems: 'center',
     padding: 'auto',
@@ -589,7 +648,8 @@ const style = StyleSheet.create({
     // borderColor: "grey",
     // borderWidth: 1, borderRadius: 10,
     // paddingLeft: 20, marginBottom: 20,
-    fontFamily: font.regular, fontSize: 20,
+    fontFamily: font.regular,
+    // fontSize: 20,
   },
   inputContainer: {
     borderColor: 'grey',
@@ -604,10 +664,16 @@ const style = StyleSheet.create({
   underline: { textDecorationLine: 'underline' },
   onboardSignUp: { width: 0.6 * width },
   actionButtonDivider: { height: 30 },
-  actionButtons: { marginTop: 40, marginBottom: 0.15 * height, paddingHorizontal: 0.2 * width },
+  actionButtons: {
+    marginTop: 40,
+    marginBottom: 20,
+    paddingHorizontal: 0.2 * width,
+  },
   logo: { width: 40, height: 40, alignSelf: 'center' },
   appName: { textAlign: 'center', color: colors.primary, fontSize: 20, paddingBottom: 10 },
   grey: { color: colors.grey },
   subTitleStyles: { lineHeight: 28, fontFamily: font.light },
-  titleStyles: { fontFamily: font.regular, fontWeight: '600', backgroundColor: 'blue' },
+  titleStyles: { fontFamily: font.regular, fontWeight: '600' },
+  languageContainer: { marginHorizontal: 20, marginVertical: 4 },
+  changeLanguageText: { textAlign: 'center', marginTop: 40, color: colors.grey, fontSize: 14 },
 });

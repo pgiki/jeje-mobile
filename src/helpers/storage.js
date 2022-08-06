@@ -9,8 +9,13 @@ const store = new MMKV();
 class Store {
   constructor() {
     this.store = store;
+    this.languageKey = 'userLanguage';
+    this.allNotificationsKey = 'allNotifications';
   }
-
+  getLanguage(defaultLanguage = 'en') {
+    const key = this.languageKey;
+    return this.get(key) || defaultLanguage;
+  }
   saveDeviceToken = async (token) => {
     const previousToken = this.getDeviceToken();
     if (previousToken !== token) { //do this check to help reduce unnecessary API calls
@@ -82,8 +87,8 @@ class Store {
     const key = 'notificationsState';
     let notifications = this.get(key) || [];
     this.set(
-      key, // Note: Do not use underscore("_") in key!
-      [{ ...notification, status }, notifications],
+      key,
+      [{ ...notification, status }, ...notifications],
     );
   }
 }

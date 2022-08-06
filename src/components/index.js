@@ -26,7 +26,9 @@ export function Button(props) {
   }[type] || type
   return <PaperButton
     uppercase={false}
+    mode={mode}
+    style={props.buttonStyle}
     {...props}
-    style={props.buttonStyle} mode={mode} >{props.title}</PaperButton>
+  >{props.title}</PaperButton>
 }
 export * from './Footer'

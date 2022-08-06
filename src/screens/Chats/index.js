@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Platform,
 } from 'react-native';
-import { Text, SearchBar, ListItem, Divider } from 'react-native-elements';
+import { Text, SearchBar, ListItem, Divider } from '@rneui/themed';
 import { colors, utils, requests, url, font } from 'src/helpers';
 import dayjs from 'dayjs';
 import _ from 'lodash';

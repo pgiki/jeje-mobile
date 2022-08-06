@@ -1,22 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
+import { StyleSheet } from 'react-native';
 import { createMaterialBottomTabNavigator } from '@react-navigation/material-bottom-tabs';
-import { BudgetsStack, HomeStack, StatsStack } from './Stacks';
+import { BudgetsStack, HomeStack, CameraStack, StatsStack } from './Stacks';
 // import { createStackNavigator } from '@react-navigation/stack';
 import { useNavigation } from '@react-navigation/native';
 import { useRecoilState } from 'recoil';
 import { notificationsState } from 'src/atoms';
 import messaging from '@react-native-firebase/messaging';
 import dynamicLinks from '@react-native-firebase/dynamic-links';
-import { utils } from 'src/helpers';
-import { colors } from 'src/helpers';
-import { useMMKVString } from 'react-native-mmkv';
-import { Icon } from 'react-native-elements';
+import { colors, LocalizationContext, utils, font } from 'src/helpers';
+import { Icon, Text } from '@rneui/themed';
+
 
 const Tab = createMaterialBottomTabNavigator();
 
 export function MainStack() {
+    const { i18n, loggedUser } = useContext(LocalizationContext);
     const navigation = useNavigation();
-    const [loggedUser, setLoggedUser] = useMMKVString('authUser')
     const [initialRoute, setInitialRoute] = useState(!loggedUser?.is_phone_verified ? 'Auth/Login' : 'Home');
     const [notifications, setNotifications] = useRecoilState(notificationsState);
 
@@ -58,32 +58,62 @@ export function MainStack() {
     return (
         <Tab.Navigator
             initialRouteName={initialRoute}
-            barStyle={{ backgroundColor: 'white' }}
-            activeColor={colors.primary}
-            inactiveColor={colors.black}
+            screenOptions={{ tabBarHideonKeyboard: true, labelStyle: { color: "blue", }, }}
+        // barStyle={{ backgroundColor: 'white' }}
+        // activeColor={colors.primary}
+        // inactiveColor={colors.black}
+        // activeColor="#f0edf6"
+        // inactiveColor="#3e2465"
+        // barStyle={{ backgroundColor: '#694fad' }}
         >
             <Tab.Screen
                 name="Home"
                 component={HomeStack}
                 options={{
-                    tabBarLabel: 'Home',
-                    tabBarIcon: ({ color }) => (
-                        <Icon name="home-outline" color={color} size={26} type={'ionicon'} />
+                    tabBarLabel: <Text style={style.label}>{i18n.t('Home')}</Text>,
+                    tabBarIcon: ({ color, focused }) => (
+                        <Icon name="home-outline" color={focused ? colors.primary : color} size={26} type={'ionicon'} />
                     ),
                 }}
 
             />
-            {/* <Tab.Screen name="Stats" component={StatsStack} /> */}
+            <Tab.Screen
+                name="Camera"
+                component={CameraStack}
+                options={{
+                    tabBarLabel: <Text style={style.label}>{i18n.t('Scanner')}</Text>,
+                    tabBarIcon: ({ color, focused }) => (
+                        <Icon name="line-scan" type='material-community' size={26} color={focused ? colors.primary : color} />
+                    ),
+                }}
+            />
+
+            <Tab.Screen
+                name="Stats"
+                component={StatsStack}
+                options={{
+                    tabBarLabel: <Text style={style.label}>{i18n.t('Summary')}</Text>,
+                    tabBarIcon: ({ color, focused }) => (
+                        <Icon color={focused ? colors.primary : color} name="linechart" type='antdesign' size={26} />
+                    ),
+                }}
+            />
             <Tab.Screen
                 name="BudgetsStack"
                 component={BudgetsStack}
                 options={{
-                    tabBarLabel: 'Budgets',
-                    tabBarIcon: ({ color }) => (
-                        <Icon name="dollar-sign" type='feather' color={color} size={26} />
+                    tabBarLabel: <Text style={style.label}>{i18n.t('Budgets')}</Text>,
+                    tabBarIcon: ({ color, focused }) => (
+                        <Icon color={focused ? colors.primary : color} name="dollar-sign" type='feather' size={26} />
                     ),
                 }}
             />
         </Tab.Navigator>
     );
 }
+
+const style = StyleSheet.create({
+    label: {
+        fontSize: 12
+    }
+})

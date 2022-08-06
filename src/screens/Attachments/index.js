@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -9,14 +9,14 @@ import {
 import {
   Text,
   Icon,
-  SearchBar, Button,
+  SearchBar,
   ListItem, Image, Slider,
-} from 'react-native-elements';
+} from '@rneui/themed';
 import FileViewer from 'react-native-file-viewer';
 import RNFetchBlob from 'rn-fetch-blob';
 // import Image from "react-native-fast-image"
 // import axios from 'axios';
-import { colors, url, utils, width, height, appID } from 'src/helpers';
+import { colors, url, utils, width, height, LocalizationContext } from 'src/helpers';
 import FlatListCustom from 'src/components/FlatList';
 import _ from 'lodash';
 import Modal from 'src/components/Modal';
@@ -24,19 +24,21 @@ import { selectedAttachmentsState } from 'src/atoms';
 import { useRecoilState } from 'recoil';
 
 export default function Attachments(props) {
+  const { i18n } = useContext(LocalizationContext)
   const {
     navigation,
     route: {
       params: {
         canSelect = false,
         isSameUser = true,
-        title = 'Documents',
+        title = i18n.t('Documents'),
         searchText: _searchText = '',
         itemType = 'transaction',
         itemId,
         extraQuery = {}
       } },
   } = props;
+
   const [searchText, setSearchText] = useState(_searchText);
   const baseURL = utils.getObject(url, 'spendi.Attachment')
   const [startURL, setStartURL] = useState(baseURL);
@@ -118,16 +120,7 @@ export default function Attachments(props) {
 
   function pickAttachment(requestType) {
     setFileUploadVisible(false);
-    // if (requestType !== 'camera') {
     navigation.navigate('Attachments/Add', { itemType, itemId, requestType });
-    // } else {
-    //   navigation.navigate('Camera', {
-    //     nextScene: {
-    //       sceneName: 'Attachments/Add',
-    //       params: { itemType, itemId, requestType }
-    //     }
-    //   })
-    // }
   }
 
 
@@ -200,9 +193,8 @@ export default function Attachments(props) {
             thumbStyle={style.downloadThumb}
           />
         </View>
-        <Text style={style.downloadProgressText}>{utils.formatNumber(progress * 100, 2)}% downloaded</Text>
+        <Text style={style.downloadProgressText}>{utils.formatNumber(progress * 100, 2)}%</Text>
       </View>}
-
       <Text style={style.categoryNameList} numberOfLines={1}>{item.attachment_category?.name}</Text>
       <Text numberOfLines={1}>{item.name}</Text>
       {canSelect && <View style={style.checkBoxItemList}>
@@ -220,7 +212,7 @@ export default function Attachments(props) {
     <View style={style.root}>
       <SearchBar
         platform={Platform.OS}
-        placeholder={'Search...'}
+        placeholder={i18n.t('Search')}
         onChangeText={text => setSearchText(text)}
         value={searchText}
         //TODO: find a way to add them to the them
@@ -239,9 +231,9 @@ export default function Attachments(props) {
           <Text style={style.emptyListText}>{
             !searchText ?
               (!isSameUser ?
-                'This user has not shared any documents with you yet'
-                : 'You currently do not have any documents') :
-              'No documents match  your query'
+                i18n.t('attachments_list_user_not_shared') :
+                i18n.t('attachments_list_user_has_no_attachments')) :
+              i18n.t('No documents match  your query')
           }</Text>
         </View>}
       />
@@ -262,8 +254,8 @@ export default function Attachments(props) {
           <ListItem>
             <Icon name="calendar" type="entypo" color={colors.grey} />
             <ListItem.Content>
-              <ListItem.Title>Uploaded Time</ListItem.Title>
-              <ListItem.Subtitle>{utils.formatDate(selectedItem?.created_at)} by {selectedItem?.user?.display_name}</ListItem.Subtitle>
+              <ListItem.Title>{i18n.t('Uploaded Time')}</ListItem.Title>
+              <ListItem.Subtitle>{utils.formatDate(selectedItem?.created_at)} {i18n.t('by')} {selectedItem?.user?.display_name}</ListItem.Subtitle>
             </ListItem.Content>
             <ListItem.Chevron />
           </ListItem>
@@ -272,7 +264,7 @@ export default function Attachments(props) {
 
       <Modal
         visible={fileUploadVisible}
-        title={'Upload File'}
+        title={i18n.t('Upload File')}
         openType={'top'}
         modalHeight={0.22 * height}
         extraProps={{
@@ -282,16 +274,13 @@ export default function Attachments(props) {
         <View style={style.uploadActions}>
           <TouchableOpacity onPress={() => pickAttachment('camera')}>
             <Icon name='camera' type='feather' color={colors.primary} />
-            <Text style={style.uploadActionText}>Camera</Text>
+            <Text style={style.uploadActionText}>{i18n.t('Camera')}</Text>
           </TouchableOpacity>
-
           <TouchableOpacity onPress={() => pickAttachment('browse')}>
             <Icon name='file' type='feather' color={colors.primary} />
-            <Text style={style.uploadActionText}>Upload</Text>
+            <Text style={style.uploadActionText}>{i18n.t('Upload')}</Text>
           </TouchableOpacity>
-
         </View>
-
       </Modal>
 
       {selectedIds.length > 0 && canSelect && <View style={style.bottomMenu}>
@@ -299,7 +288,7 @@ export default function Attachments(props) {
           onPress={onSubmit}
         >
           <Icon name="share" type="entypo" size={22} color={colors.white} />
-          <Text style={style.bottomMenuText}>Share</Text>
+          <Text style={style.bottomMenuText}>{i18n.t('Share')}</Text>
         </TouchableOpacity>
       </View>}
       {isSameUser && <TouchableOpacity style={style.fixedButton}

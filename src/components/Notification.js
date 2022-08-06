@@ -19,6 +19,7 @@ async function saveTokenToDatabase(token) {
 export default function Notification() {
   const navigation = useNavigation();
   const [_notifications, _setNotifications] = useMMKVString('notificationsState');
+  const [loggedUser] = useMMKVString('authUser');
   const [localNotification] = useRecoilState(localNotificationState);
 
   const notifications = utils.parse(_notifications);
@@ -91,16 +92,15 @@ export default function Notification() {
         },
       });
     // save notification locally
-    setNotifications([...notifications, message]);
+    setNotifications([message, ...notifications]);
   };
 
   useEffect(() => {
     /* get clicked notification to open the app*/
+    messaging().onNotificationOpenedApp(onMessage);
     messaging()
       .getInitialNotification()
-      .then(message => {
-        onMessage(message);
-      })
+      .then(onMessage)
       .catch(error => null);
   }, []);
 
@@ -111,12 +111,17 @@ export default function Notification() {
   }, [localNotification]);
 
   useEffect(() => {
-    requestUserPermission();
-    // Get the device token
-    getDeviceToken();
-    // Listen to whether the token changes
-    messaging().onTokenRefresh(saveTokenToDatabase);
-  }, []);
+    // register user only fully logged in, wait a bit for axios to be saved
+    if (loggedUser) {
+      setTimeout(() => {
+        requestUserPermission();
+        // Get the device token
+        getDeviceToken();
+        // Listen to whether the token changes
+        messaging().onTokenRefresh(saveTokenToDatabase);
+      }, 5e3)
+    }
+  }, [loggedUser]);
 
   //subscribe to receiving remote messages
   useEffect(() => {

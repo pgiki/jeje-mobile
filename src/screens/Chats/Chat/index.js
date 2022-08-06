@@ -1,21 +1,23 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useCallback } from 'react';
 import useState from 'react-usestateref';
-import { Platform, View, StyleSheet, KeyboardAvoidingView, Alert } from 'react-native';
-import { GiftedChat } from 'react-native-gifted-chat';
+import { Platform, View, Text, StyleSheet, KeyboardAvoidingView, Alert, Keyboard } from 'react-native';
+import { Composer, GiftedChat, InputToolbar } from 'react-native-gifted-chat';
 import emojiUtils from 'emoji-utils';
 import SlackMessage from './SlackMessage';
 import _ from 'lodash';
-import { requests, url, utils, colors, DEBUG  } from 'src/helpers';
+import { requests, url, utils, colors, DEBUG } from 'src/helpers';
 import { parseText } from 'src/components/ParsedText';
 import schema from 'src/schema';
 import { io } from 'socket.io-client';
+
 const socket = io(url.socket, { forceNew: true, secure: true });
 
 export default function Chat(props) {
   // console.log("route.params", props.route.params);
   const { navigation, route, route: { params, params: { room: _room } } } = props;
   const roomId = params?.roomId || 0;
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [room, setRoom] = useState(_room || {});
   const [messages, setMessages, messagesRef] = useState([]);
   const [loggedUser] = useState(utils.getUser());
@@ -40,6 +42,18 @@ export default function Chat(props) {
       }
     }
   }
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
+      setIsKeyboardVisible(true);
+    });
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
+      setIsKeyboardVisible(false);
+    });
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   useEffect(() => {
     if (roomId) {
@@ -290,7 +304,7 @@ export default function Chat(props) {
   return (
     <View style={style.root}>
       <GiftedChat
-        style={style.root}
+        // style={style.root}
         messages={messages}
         onSend={onSend}
         user={user}
@@ -305,7 +319,7 @@ export default function Chat(props) {
         // </View>}
         // renderAccessory={this.renderAccessory}
         // renderChatFooter={this.renderChatFooter}
-        // renderFooter={()=><Text style={{marginLeft:20, color:colors.primary}}>Giki is tryping...</Text>}
+        // renderFooter={() => <Text style={{ marginLeft: 20, color: colors.primary }}>Giki is tryping...</Text>}
         // customization
         inverted={false}
         isLoadingEarlier={loading}
@@ -320,10 +334,20 @@ export default function Chat(props) {
         onInputTextChanged={text => {
           !loading && setInputText(text);
         }}
+        sendButtonProps={{ style: style.sendContainer }}
+        renderInputToolbar={(_props) => <InputToolbar {..._props} containerStyle={style.inputContainer} />}
+        renderComposer={(_props) => <Composer {..._props}
+          composerHeight={75}
+          textInputStyle={style.textInputStyle}
+        />}
+        isTyping={false}
+        isKeyboardInternallyHandled={true}
+        textInputProps={{
+          onFocus: () => setIsKeyboardVisible(true),
+          onBlur: () => setIsKeyboardVisible(false),
+        }}
       />
-      {
-        Platform.OS === 'android' && false && <KeyboardAvoidingView behavior="padding" />
-      }
+      {Platform.OS === 'android' && isKeyboardVisible && <KeyboardAvoidingView style={style.avoidView} behavior="padding" keyboardVerticalOffset={80} />}
     </View>
   );
 }
@@ -333,14 +357,18 @@ const style = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.white,
   },
+  avoidView: { minHeight: 180 },
   center: {
     alignSelf: 'center',
     alignItems: 'center',
   },
-  emptyChat:{
+  emptyChat: {
     alignSelf: 'center',
     alignItems: 'center',
-    paddingTop:'40%',
+    paddingTop: '40%',
     // color:colors.grey
-  }
+  },
+  textInputStyle: { backgroundColor: colors.backgroundColor2, borderRadius: 20, paddingLeft: 10 },
+  sendContainer: { paddingBottom: 20 },
+  inputContainer: { borderTopWidth: 0, marginRight: 10 },
 });

@@ -6,4 +6,5 @@ export * from "./utils";
 export * from "./colors"
 export * from "./storage";
 export * from "./persistAtom";
+export * from './localization';
 

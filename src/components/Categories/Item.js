@@ -1,15 +1,15 @@
 import React from 'react';
-import {StyleSheet, View, TouchableOpacity} from 'react-native';
-import {Text} from 'react-native-elements';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { Text } from '@rneui/themed';
 import FastImage from 'react-native-fast-image';
-import {useNavigation} from '@react-navigation/native';
-import {width, font, utils, colors} from 'src/helpers';
+import { useNavigation } from '@react-navigation/native';
+import { width, font, utils, colors } from 'src/helpers';
 
 export default function Item(props) {
-  const {item, imageStyle, itemContainer} = props;
+  const { item, imageStyle, itemContainer } = props;
   const navigation = useNavigation();
   const onPressItem = () =>
-    navigation.navigate('Listing', {id: item?.id, item});
+    navigation.navigate('Listing', { id: item?.id, item });
   if (!item) {
     return null;
   }
@@ -20,7 +20,7 @@ export default function Item(props) {
       activeOpacity={0.8}
       style={itemContainer || style.itemContainer}>
       <FastImage
-        source={uri ? {uri} : null}
+        source={uri ? { uri } : null}
         style={imageStyle || style.image}
       />
       <Text style={style.title}>Cardiology</Text>
@@ -34,15 +34,15 @@ const style = StyleSheet.create({
     marginTop: 0,
     marginRight: 3,
     marginBottom: 10,
-    backgroundColor:colors.white,
-    shadowOffset: {width: 0, height: 1},
+    backgroundColor: colors.white,
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.9,
     shadowRadius: 0,
     borderRadius: 2,
     elevation: 2,
     width: 0.35 * width,
     height: 0.4 * width,
-    alignItems:"center",
+    alignItems: "center",
 
   },
   image: {
@@ -50,7 +50,7 @@ const style = StyleSheet.create({
     height: 0.2 * width,
     marginHorizontal: 5,
     borderRadius: 4,
-    marginVertical:10,
+    marginVertical: 10,
   },
   title: {
     fontSize: 16,
@@ -63,6 +63,6 @@ const style = StyleSheet.create({
     fontFamily: font.light,
     paddingTop: 4,
     paddingLeft: 6,
-    color:colors.grey,
+    color: colors.grey,
   },
 });

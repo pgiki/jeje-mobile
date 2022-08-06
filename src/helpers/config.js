@@ -10,7 +10,7 @@ export const firebaseDynamicLinkPrefix = 'jeje.page.link';
 
 export const config = {
   // API_URL: 'http://192.168.247.28:8000',
-  // API_URL: 'http://192.168.100.22:8000',
+  // API_URL: 'http://192.168.43.25:8000',
   API_URL: 'https://niwezesheapi.hudumabomba.com',
 };
 
@@ -36,53 +36,25 @@ export const priceSliderScale = {
 };
 
 export const font = {
-  // light: Platform.select({
-  //   ios: 'AirbnbCerealApp-Light',
-  //   default: 'AirbnbCerealLight',
-  // }),
-  // medium: Platform.select({
-  //   ios: 'AirbnbCerealApp-Medium',
-  //   default: 'AirbnbCerealMedium',
-  // }),
-  // regular: Platform.select({
-  //   ios: 'AirbnbCerealApp-Book',
-  //   default: 'AirbnbCerealBook',
-  // }),
-  // bold: Platform.select({
-  //   ios: 'AirbnbCerealApp-Bold',
-  //   default: 'AirbnbCerealBold',
-  // }),
-};
-
-export const ads = {
-  banner: Platform.select({
-    android: {
-      // ca-app-pub-3003997714287872/9776591823 //# inline banner | ca-app-pub-3940256099942544/2934735716
-      banner: 'ca-app-pub-3003997714287872/9776591823',
-      // ca-app-pub-3003997714287872/9776591823 //inline banner | ca-app-pub-3940256099942544/2247696110
-      // listingSingle:'ca-app-pub-3003997714287872/9776591823',
-      listingSingle: 'ca-app-pub-3003997714287872/1740428947',
-      // ca-app-pub-3003997714287872/4149586976 //#covers entire screen | ca-app-pub-3940256099942544/2521693316
-      interstitial: 'ca-app-pub-3003997714287872/4149586976',
-      // ca-app-pub-3003997714287872/1740428947 //#custom native ads | ca-app-pub-3940256099942544/2247696110
-      listings: 'ca-app-pub-3003997714287872/1740428947',
-      rewardOpted: 'ca-app-pub-3003997714287872/8656303033',
-      reward: 'ca-app-pub-3003997714287872/3140607696',
-    },
-    ios: {
-      // ca-app-pub-3003997714287872/9776591823 //# inline banner | ca-app-pub-3940256099942544/2934735716
-      banner: 'ca-app-pub-3003997714287872/2149323171',
-      // ca-app-pub-3003997714287872/9776591823 //inline banner | ca-app-pub-3940256099942544/2247696110
-      listingSingle: 'ca-app-pub-3003997714287872/2149323171',
-      // ca-app-pub-3003997714287872/4149586976 //#covers entire screen | ca-app-pub-3940256099942544/2521693316
-      interstitial: 'ca-app-pub-3003997714287872/6426661294',
-      // ca-app-pub-3003997714287872/1740428947 //#custom native ads | ca-app-pub-3940256099942544/2247696110
-      listings: 'ca-app-pub-3003997714287872/5896996493',
-      rewardOpted: 'ca-app-pub-3003997714287872/6858724371',
-      reward: 'ca-app-pub-3003997714287872/6858724371',
-    },
+  light: Platform.select({
+    ios: 'AirbnbCerealApp-Light',
+    default: 'AirbnbCerealLight',
+  }),
+  medium: Platform.select({
+    ios: 'AirbnbCerealApp-Medium',
+    default: 'AirbnbCerealMedium',
+  }),
+  regular: Platform.select({
+    ios: 'AirbnbCerealApp-Book',
+    default: 'AirbnbCerealBook',
+  }),
+  bold: Platform.select({
+    ios: 'AirbnbCerealApp-Bold',
+    default: 'AirbnbCerealBold',
   }),
 };
+
+export const ads = {};
 
 export const url = {
   BASE_URL: config.API_URL,

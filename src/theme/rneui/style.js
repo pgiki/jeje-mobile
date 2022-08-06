@@ -2,9 +2,13 @@ import { StyleSheet } from 'react-native';
 import { font, colors } from 'src/helpers';
 
 const style = StyleSheet.create({
-  ListItemSubtitle__style:{
-    fontSize:14, 
-    color:colors.grey
+  ListItemSubtitle__style: {
+    fontSize: 14,
+    color: colors.grey,
+    fontFamily: font.regular,
+  },
+  ListItemTitle__style: {
+    fontFamily: font.regular,
   },
   CheckBox__containerStyle: {
     marginTop: 0,
@@ -15,6 +19,7 @@ const style = StyleSheet.create({
   CheckBox__textStyle: {
     flex: 1,
     fontWeight: 'normal',
+    fontFamily: font.regular,
   },
   Text__style: {
     fontSize: 15,

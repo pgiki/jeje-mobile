@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -6,11 +6,11 @@ import {
   TouchableOpacity,
   FlatList,
 } from 'react-native';
-import {Text} from 'react-native-elements';
-import {useNavigation} from '@react-navigation/native';
-import {filtersState, filtersSelector, listingsState} from 'src/atoms';
-import {useRecoilState, useRecoilValue} from 'recoil';
-import {config, width, height, font, requests, url, utils} from 'src/helpers';
+import { Text } from '@rneui/themed';
+import { useNavigation } from '@react-navigation/native';
+import { filtersState, filtersSelector, listingsState } from 'src/atoms';
+import { useRecoilState, useRecoilValue } from 'recoil';
+import { config, width, height, font, requests, url, utils } from 'src/helpers';
 import Item from './Item';
 
 export default function RelatedListings(props) {

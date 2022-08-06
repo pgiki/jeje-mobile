@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import {
   StyleSheet,
   Alert,
@@ -13,32 +13,26 @@ import {
   ListItem,
   Avatar,
   Divider,
-
-} from 'react-native-elements';
+  Button,
+} from '@rneui/themed';
 import codePush from 'react-native-code-push';
-import { utils, width, height, colors, font, url, appName } from 'src/helpers';
+import { utils, width, height, colors, font, url, LocalizationContext, requests } from 'src/helpers';
+import Modal from 'src/components/Modal';
 
 export default function Profile(props) {
+  const { i18n, setAppLanguage, appLanguage } = useContext(LocalizationContext);
   const [loggedUser, setLoggedUser] = useState(utils.getUser());
   const [appInfo, setAppInfo] = useState();
+  const [loading, setLoading] = useState(true);
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+  const [isLanguageModalVisible, setIsLanguageModalVisible] = useState(false);
+
   const {
     navigation,
     route,
     route: { params },
   } = props;
   const id = loggedUser?.id;
-  const [loading, setLoading] = useState(true);
-  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
-
-  function openProfile() {
-    const itemId = loggedUser?.profile_id;
-    if (itemId) {
-      navigation.navigate('Profiles/View', { itemId });
-    } else {
-      Alert.alert('No profile found', "More likely you haven't finished setting up your app. If this persists try to logout and then login again");
-    }
-  }
-
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
@@ -77,9 +71,8 @@ export default function Profile(props) {
       },
     });
     await utils.share({
-      title: `Download ${appName}`,
-      message: `${loggedUser?.first_name || "You're"
-        } invited you to download ${appName}. Track every penny`,
+      title: i18n.t('Download {appName}', { appName }),
+      message: i18n.t('settings_download_invitation', { appName, firstName: loggedUser?.first_name || "You're" }),
       url: link.shortLink || 'https://onelink.to/jeje',
     });
     setIsGeneratingLink(false);
@@ -87,7 +80,22 @@ export default function Profile(props) {
 
   const onLogout = () => {
     utils.logout();
-    navigation.replace('Auth/Login');
+  };
+  const onAccountDelete = () => {
+    Alert.alert(
+      i18n.t('Delete Account'),
+      i18n.t('account_deletion_desc'),
+      [{ text: i18n.t('Dismiss') }, {
+        text: i18n.t('Submit'),
+        onPress: async () => {
+          await requests.post(url.User + 'delete_account/')
+          Alert.alert(
+            i18n.t('Delete Account'),
+            i18n.t('account_deletion_success')
+          )
+        }
+      }]
+    );
   };
 
   const onContactSupport = () => {
@@ -95,7 +103,7 @@ export default function Profile(props) {
       () => {
         utils.privateChat({
           navigation,
-          name: 'Customer Care',
+          name: i18n.t('Customer Care'),
           users: [loggedUser, { id: 19, username: 'admin' }],
         });
       },
@@ -136,29 +144,34 @@ Invite a friend
     {
       options: [
         {
-          title: 'Invite a Friend',
+          title: i18n.t('Set Language'),
+          subtitle: i18n.t(appLanguage || 'en'),
+          icon: { name: 'earth', type: 'antdesign' },
+          onPress: () => setIsLanguageModalVisible(!isLanguageModalVisible),
+        },
+        {
+          title: i18n.t('Invite a Friend'),
           subtitle: isGeneratingLink
-            ? 'Generating link. Please wait...'
-            : 'Sharing is caring',
+            ? i18n.t('Generating link Please wait')
+            : i18n.t('Sharing is caring'),
           icon: { name: 'adduser', type: 'antdesign' },
           onPress: inviteFriends,
         },
         {
-          title: 'About',
+          title: i18n.t('About'),
           subtitle: appInfo
             ? `Version: ${appInfo.appVersion}, label: ${appInfo.label}`
-            : 'Updated',
+            : i18n.t('Updated'),
           icon: { name: 'info', type: 'feather' },
           onPress: () => {
             // Updated: ${dayjs(appInfo.binaryModifiedTime).fromNow()}
             if (appInfo) {
               Alert.alert(
-                'App Info',
-                `
-            Version: ${appInfo.appVersion}
+                i18n.t('App Info'),
+                `Version: ${appInfo.appVersion}
             Label: ${appInfo.label} 
             Description: ${appInfo.description}
-            `,
+      `,
               );
             }
           },
@@ -169,40 +182,51 @@ Invite a friend
         //   name: 'Help',
         //   options: [
         {
-          title: 'Terms and Conditions',
-          subtitle: 'All the stuff you should know',
+          title: i18n.t('Terms and Conditions'),
+          subtitle: i18n.t('All the stuff you should know'),
           icon: { name: 'clipboard', type: 'feather' },
-          onPress: () => utils.openURL(url.tnc),
+          onPress: () => navigation.navigate('Web', { uri: url.tnc, title: i18n.t('Terms and Conditions') }),
         },
         {
-          title: 'Privacy Policy',
-          subtitle: 'Important for both of us',
+          title: i18n.t('Privacy Policy'),
+          subtitle: i18n.t('Important for both of us'),
           icon: { name: 'Safety', type: 'antdesign' },
-          onPress: () => utils.openURL(url.privacy),
+          onPress: () => navigation.navigate('Web', { uri: url.privacy, title: i18n.t('Privacy Policy') }),
         },
         {
-          title: 'Support',
-          subtitle: 'Ping us and we will give you a hand',
+          title: i18n.t('Support'),
+          subtitle: i18n.t('Ping us and we will give you a hand'),
           icon: { name: 'headphones', type: 'feather' },
           onPress: onContactSupport,
         },
-        //   ],
-        // },
-        // {
-        //   options: [
+        Platform.select({
+          'android': {
+            title: i18n.t('Delete Account'),
+            subtitle: i18n.t('Your account with all associated data will be delete'),
+            icon: { name: 'trash', type: 'feather' },
+            onPress: onAccountDelete,
+          },
+          default: null,
+        }),
         {
-          title: 'Log out',
-          subtitle: 'Once you logout, some cached data may be deleted',
+          title: i18n.t('Log out'),
+          subtitle: i18n.t('Once you logout, some cached data may be deleted'),
           icon: { name: 'logout', type: 'antdesign' },
           onPress: onLogout,
         },
-      ].filter(i => (loggedUser ? true : false)),
+      ].filter(i => !!i),
     },
   ];
+
   const avatar = loggedUser?.avatar;
   const editProfile = () => navigation.navigate('Auth/Profile');
+  const languages = i18n.getAvailableLanguages();
+  function changeLanguage(langCode) {
+    setAppLanguage(langCode);
+    setTimeout(() => setIsLanguageModalVisible(false), 10);
+  }
 
-  return (
+  return (<>
     <ScrollView>
       <View style={style.root}>
         <View style={style.profileContainer}>
@@ -211,7 +235,6 @@ Invite a friend
               source={avatar ? { uri: avatar } : undefined}
               title={utils.getAvatarInitials(loggedUser?.display_name)}
               size={'medium'}
-              onPress={openProfile}
             // style={style.avatar}
             />
           )}
@@ -235,12 +258,12 @@ Invite a friend
         <View style={style.sectionsContainer}>
           <Divider />
           {sections.map((section, i) => (
-            <View key={`section-${i}`}
+            <View key={`section - ${i}`}
             // style={style.sectionContainer}
             >
               {section.options.map((option, j) => (
                 <ListItem
-                  key={`item-${i}-${j}`}
+                  key={`item - ${i} - ${j}`}
                   bottomDivider
                   onPress={option.onPress}>
                   {!!option.icon && <Icon {...option.icon} size={35} color={colors.grey} />}
@@ -257,6 +280,25 @@ Invite a friend
         </View>
       </View>
     </ScrollView>
+    <Modal
+      title={i18n.t('Language')}
+      subtitle={i18n.t('Set Language')}
+      modalHeight={0.5 * height}
+      visible={isLanguageModalVisible}
+      extraProps={{
+        onClosed: () => setIsLanguageModalVisible(false),
+      }}
+    >
+
+      {languages.map((langCode, index) => <Button
+        title={i18n.t(langCode)}
+        onPress={() => changeLanguage(langCode)}
+        key={index}
+        type={langCode === appLanguage ? 'solid' : 'outline'}
+        containerStyle={style.languageContainer}
+      />)}
+    </Modal>
+  </>
   );
 }
 
@@ -268,6 +310,7 @@ const style = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 20,
   },
+  languageContainer: { marginHorizontal: 20, marginVertical: 4 },
   sectionsContainer: {
     backgroundColor: colors.white,
     // paddingBottom:100,

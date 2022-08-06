@@ -2,11 +2,10 @@
 // 51,108,138
 const primary = 'rgb(89,175,165)'; //to hex 338A5D
 // rgba(89,175,165, 0.4)
-const _primary = a => `rgba(89,175,165, ${a})`;
 const getColorByName = name => {
   /*
-		get colors when username is given
-	*/
+    get colors when username is given
+  */
   const getIndex = str => {
     let n = str && str.charCodeAt(0) - 95;
     if (!n) {

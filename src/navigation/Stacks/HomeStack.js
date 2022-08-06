@@ -1,13 +1,10 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Text } from 'react-native-paper';
+import React, { useState } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import FastImage from 'react-native-fast-image';
 import { utils } from 'src/helpers';
 import Notifications from 'src/screens/Notifications';
 import Dashboard from 'src/screens/Dashboard'
-// import Groups from 'src/screens/Groups';
+import Web from 'src/screens/Web';
 // import GroupsAdd from 'src/screens/Groups/Add';
 
 import Chats from 'src/screens/Chats';
@@ -16,10 +13,11 @@ import Chat from 'src/screens/Chats/Chat';
 import Attachments from 'src/screens/Attachments';
 import AttachmentsAdd from 'src/screens/Attachments/Add';
 import ProfilesView from 'src/screens/Profiles/View';
-import Camera from 'src/screens/Camera';
+
+import Groups from 'src/screens/Groups';
+import GroupsAdd from 'src/screens/Groups/Add';
 
 import TransactionsAdd from 'src/screens/Transactions/Add';
-import TransactionsView from 'src/screens/Transactions/View';
 
 import AuthProfile from 'src/screens/Auth/Profile';
 import Login from 'src/screens/Auth/Login';
@@ -56,25 +54,10 @@ export function HomeStack() {
           })}
         />
         <Stack.Screen
-          name="Camera"
-          component={Camera}
-          options={({ route, navigation }) => ({
-            // title: 'Camera',
-            headerShown: false,
-          })}
-        />
-        <Stack.Screen
           name="Transactions/Add"
           component={TransactionsAdd}
           options={({ route, navigation }) => ({
             title: 'Add Transaction',
-          })}
-        />
-        <Stack.Screen
-          name="Transactions/View"
-          component={TransactionsView}
-          options={({ route, navigation }) => ({
-            title: 'View Transaction',
           })}
         />
 
@@ -85,6 +68,22 @@ export function HomeStack() {
             title: 'Attachments',
           })}
         />
+
+        <Stack.Screen
+          name="Groups"
+          component={Groups}
+          options={({ route, navigation }) => ({
+            title: 'Groups',
+          })}
+        />
+        <Stack.Screen
+          name="Groups/Add"
+          component={GroupsAdd}
+          options={({ route, navigation }) => ({
+            title: 'Add Group',
+          })}
+        />
+
         <Stack.Screen
           name="Attachments/Add"
           component={AttachmentsAdd}
@@ -131,6 +130,13 @@ export function HomeStack() {
           name="Notifications"
           component={Notifications}
           initialParams={{ name: 'Notifications' }}
+        />
+        <Stack.Screen
+          name="Web"
+          component={Web}
+          options={({ route, navigation }) => ({
+            title: 'Web',
+          })}
         />
       </Stack.Group>
     </Stack.Navigator>

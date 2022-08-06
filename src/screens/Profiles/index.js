@@ -14,7 +14,7 @@ import {
   Overlay,
   ListItem,
   ButtonGroup,
-} from 'react-native-elements';
+} from '@rneui/themed';
 import { colors, font, utils, requests, url, width, height } from 'src/helpers';
 import FlatListCustom from 'src/components/FlatList';
 

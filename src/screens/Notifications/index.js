@@ -6,7 +6,7 @@ import {
   FlatList,
   TouchableOpacity, Alert,
 } from 'react-native';
-import { Text, ListItem, Divider, Tab, TabView } from 'react-native-elements';
+import { Text, ListItem, Divider, Tab, TabView } from '@rneui/themed';
 import { colors, utils, font } from 'src/helpers';
 import dayjs from 'dayjs';
 import Chats from 'src/screens/Chats';
@@ -21,7 +21,7 @@ export default function Notifications(props) {
   const { navigation } = props;
 
   const results = utils.parse(_results); //change to array
-  functionsetResults = (value) => _setResults(JSON.stringify(value))
+  const setResults = (value) => _setResults(JSON.stringify(value))
 
   const onPressItem = ({ item }) => {
     if (item?.data?.type) {

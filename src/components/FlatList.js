@@ -1,11 +1,11 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, {
   useCallback,
-  useState, useEffect,
+  useState, useEffect, useContext
 } from 'react';
 import { View, StyleSheet, FlatList } from 'react-native';
-import { Text } from 'react-native-paper';
-import { utils, requests, DEBUG, height } from 'src/helpers';
+import { Text } from '@rneui/themed';
+import { utils, requests, DEBUG, height, LocalizationContext } from 'src/helpers';
 import _ from 'lodash';
 import Loading from './Loading';
 
@@ -13,14 +13,16 @@ function useAsync(asyncFn, onSuccess) {
   useEffect(() => {
     let isActive = true;
     asyncFn().then(data => {
-      if (isActive && onSuccess) onSuccess(data);
+      if (isActive && onSuccess) { onSuccess(data); }
     });
-    return () => { isActive = false };
+    return () => { isActive = false; };
   }, [asyncFn, onSuccess]);
 }
 
 export default function FlatListCustom(props) {
   const { startURL, ListEmptyComponent } = props;
+  const { i18n } = useContext(LocalizationContext);
+
   const [searchText, setSearchText] = useState(props.searchText);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -43,12 +45,13 @@ export default function FlatListCustom(props) {
     }
     setLoading(false);
   };
+
   const debounceFetchData = useCallback(
     _.debounce((link) => fetchData(link),
       800,
       {
-        // 'wait': 3000,
-        'leading': false,
+        //// 'wait': 3000,
+        // 'leading': false,
       }), []);
 
   const onRefresh = async () => {
@@ -74,6 +77,7 @@ export default function FlatListCustom(props) {
     if (!loading && props.clearOnRefresh) {
       setResults([]);
     }
+    return debounceFetchData.cancel;
   }, [startURL]);
 
   useEffect(() => {
@@ -91,15 +95,14 @@ export default function FlatListCustom(props) {
       data={results}
       keyExtractor={utils.keyExtractor}
       contentContainerStyle={style.contentContainerStyle}
-      
       {...props}
       ListEmptyComponent={(
         loading ? <Loading containerStyle={style.loading} /> :
           (!ListEmptyComponent ?
             <View style={style.emptyList}>
-              <Text>Your data will appear here</Text>
+              <Text>{i18n.t('Your data will appear here')}</Text>
             </View > :
-            ListEmptyComponent()
+            ListEmptyComponent(response)
           )
       )}
     />
@@ -117,7 +120,7 @@ const style = StyleSheet.create({
     marginHorizontal: 5,
     padding: 10,
   },
-  contentContainerStyle:{
-    paddingBottom:50,
-  }
+  contentContainerStyle: {
+    paddingBottom: 50,
+  },
 });
