@@ -59,6 +59,9 @@ const style = StyleSheet.create({
   searchContainer: {
     paddingHorizontal: 10,
   },
+  SearchBarInputContainerStyle: {
+    fontFamily: font.light,
+  },
   avatarContainer: {
     backgroundColor: colors.primary,
     marginLeft: 6

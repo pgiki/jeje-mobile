@@ -172,8 +172,6 @@ export default function Stats(props) {
             bezier
             style={style.lineChart}
           />}
-
-
           <View style={style.horizontal}>
             <Text style={style.summaryText}>{i18n.t('Summary')}</Text>
             <Menu

@@ -12,6 +12,7 @@ watchman watch-del-all && rm -rf yarn.lock package-lock.json node_modules && rm 
 # Roadmap & TODO
 1. [Done]August 4, 2022: Add scan QR code. if doesn't exist give option to add, QR code, desciption, amount and etc
 2. Backend feature: for transactions with future transaction_at, send a payment reminder if due date is approaching.
+3. August 8, 2022: Connect with debt collection module where users can add phone number and status as tags for the debtor to be reminded.
 
 
 

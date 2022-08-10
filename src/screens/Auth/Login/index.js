@@ -498,11 +498,10 @@ export default function Login(props) {
                 buttonStyle={style.submitButton}
                 onPress={handleSubmit(onSubmit)}
                 loading={loading}
-                title={(loading ? i18n.t('Please Wait') : actionName.toUpperCase())}
+                title={(loading ? i18n.t('wait_loading') : actionName.toUpperCase())}
               />
               <View style={style.otherActionsContainer}>
                 {otherActions
-                  // .filter(i => i !== 'forgotPassword')
                   .map((option, index) => (
                     <TouchableOpacity
                       style={style.otherActionsContainer}
@@ -518,7 +517,6 @@ export default function Login(props) {
                   ))}
               </View>
               <TouchableOpacity
-                // style={{position: 'absolute', bottom:-, alignSelf:'center'}}
                 onPress={() => setIsLanguageModalVisible(true)}>
                 <Text style={style.changeLanguageText}>
                   {i18n.t('Change Language')}

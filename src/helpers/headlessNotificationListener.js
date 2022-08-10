@@ -35,7 +35,7 @@ export async function saveTransaction({ text, description, title = '', selectedI
                 create: [
                     { name: source, user },
                     { name: provider, user },
-                    { name: accountName.title(), user },
+                    { name: accountName?.title(), user },
                     { name: confirmationCode, user },
                     { name: title, user },
                 ].filter(tag => !!tag.name)
@@ -76,15 +76,15 @@ export default async function headlessNotificationListener(data) {
                         notification,
                         description: selectedIntent.accountName
                     });
-                    DEBUG && console.log('newTransaction', JSON.stringify(newTransaction, null, 2))
+                    DEBUG && console.log('newTransaction', JSON.stringify(newTransaction, null, 2));
                 } else {
-                    DEBUG && console.log(`Not saved because low confidence or no amount=${selectedIntent}.`, selectedIntent.confidence)
+                    DEBUG && console.log(`Not saved because low confidence or no amount=${selectedIntent}.`, selectedIntent.confidence);
                 }
             } else {
                 DEBUG && console.log('Already processed', title, text)
             }
         })
     } else {
-        DEBUG && console.log('not valid message', notification?.text, notification?.groupedMessages?.length > 0)
+        DEBUG && console.log('not valid message', notification?.text, notification?.groupedMessages?.length > 0);
     }
 }

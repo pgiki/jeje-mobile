@@ -200,7 +200,7 @@ Invite a friend
           onPress: onContactSupport,
         },
         Platform.select({
-          'android': {
+          'ios': {
             title: i18n.t('Delete Account'),
             subtitle: i18n.t('Your account with all associated data will be delete'),
             icon: { name: 'trash', type: 'feather' },

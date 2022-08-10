@@ -134,7 +134,7 @@ export default function TransactionsAdd(props) {
             setNlpData(selectedIntent);
             return true
         } else {
-            setAlertMessage(i18n.t('Sorry nothing matches this transaction description'));
+            // setAlertMessage(i18n.t('Sorry nothing matches this transaction description'));
         }
         return false
     }

@@ -28,6 +28,7 @@ export const elementTheme = createTheme({
       searchIcon: { name: 'search', type: 'evilicon' },
       clearIcon: { name: 'close', type: 'evilicon' },
       cancelIcon: { name: 'undo', type: 'evilicon', size: 30 },
+      inputStyle: style.SearchBarInputContainerStyle
     },
     Button: {
       titleStyle: style.Button__titleStyle,

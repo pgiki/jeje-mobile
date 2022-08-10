@@ -25,7 +25,7 @@ import schema from 'src/schema';
 
 export default function Dashboard(props) {
   const { navigation, route: { params } } = props;
-  const { i18n } = useContext(LocalizationContext);
+  const { i18n, loggedUser } = useContext(LocalizationContext);
   const [searchText, setSearchText] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -44,7 +44,6 @@ export default function Dashboard(props) {
     count: 0,
   });
   const [searchFilters, setSearchFilters] = useState(params?.searchFilters || {})
-  const [loggedUser, setLoggedUser] = useState(utils.getUser);
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
 
   const [transaction_at__gte, setTransaction_at__gte] = useState(undefined);
@@ -52,6 +51,7 @@ export default function Dashboard(props) {
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
   const [dateField, setDateField] = useState('transaction_at__gte');
   const [users, setUsers] = useState([]);
+
   const [initialDate, setInitialDate] = useState();
   const [reportTitle, setReportTitle] = useState('')
 
@@ -79,9 +79,6 @@ export default function Dashboard(props) {
   const {
     total_spending,
     total_income,
-    total_budget_spending,
-    total_budget_income,
-    total_balance
   } = response
 
   const currency = loggedUser?.currency;
@@ -322,7 +319,7 @@ export default function Dashboard(props) {
         mode="date"
         onConfirm={handleDateConfirm}
         onCancel={hideDatePicker}
-      // date={new Date(initialDate)}
+        date={new Date(initialDate)}
       />
       {true && <Modal
         visible={isFilterModalVisible}

@@ -1,17 +1,18 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
+import { View, StyleSheet, Alert, Platform } from 'react-native';
 import { CameraScreen } from 'react-native-camera-kit';
-import { Overlay, ListItem, Icon } from '@rneui/themed';
+import { Overlay, ListItem } from '@rneui/themed';
 import { Snackbar, Text } from 'react-native-paper';
 import Clipboard from '@react-native-clipboard/clipboard';
 import FastImage from 'react-native-fast-image';
-import { Button } from 'src/components';
 import { height, width, requests, url, LocalizationContext, colors, utils } from 'src/helpers';
 import { selectedFileState } from 'src/atoms';
 import { useRecoilState } from 'recoil';
 import Modal from 'src/components/Modal';
-import { ScrollView } from 'src/components';
+import { ScrollView, Button } from 'src/components';
 import _ from 'lodash';
+import { check, PERMISSIONS, RESULTS } from 'react-native-permissions';
+
 const aspectRatio = (width / height) * 0.8;
 
 export default function Camera(props) {
@@ -20,12 +21,14 @@ export default function Camera(props) {
     const [isOverlayVisible, setIsOverlayVisible] = useState(false);
     const [alertMessage, setAlertMessage] = useState();
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const [selectedFile, setSelectedFile] = useRecoilState(selectedFileState);
+    const [, setSelectedFile] = useRecoilState(selectedFileState);
     const [barcode, setBarcode] = useState('');
     const [loading, setLoading] = useState(false);
     const [traReceipt, setTraReceipt] = useState();
     const [image, setImage] = useState();
     const [scanBarcode, setScanBarcode] = useState(params?.scanBarcode === undefined ? true : params?.scanBarcode);
+    const [isMounted, setIsMounted] = useState(true);
+    const [cameraPermission, setCameraPermission] = useState(RESULTS.DENIED);
 
     useEffect(() => {
         if (image) {
@@ -40,6 +43,42 @@ export default function Camera(props) {
     }, [params?.scanBarcode])
 
     useEffect(() => {
+        const beforeRemove = navigation.addListener('beforeRemove', () => {
+            // refresh everytime focuses on scree or if params changes
+            setIsMounted(false);
+        });
+
+        const onFocus = navigation.addListener('focus', () => {
+            // refresh everytime focuses on scree or if params changes
+            remountCamera();
+        });
+
+        const cameraPermissionInterval = setInterval(async () => {
+            // continously change for camera permission unless the permission is permitted or screen unmounted;
+            if (cameraPermission !== RESULTS.GRANTED) {
+                const perm = await getCameraPermission();
+                setCameraPermission(perm);
+                if (perm === RESULTS.GRANTED) {
+                    clearInterval(cameraPermission);
+                }
+            }
+        }, 2e3)
+
+        return () => {
+            beforeRemove();
+            onFocus();
+            clearInterval(cameraPermissionInterval)
+        }
+    }, [navigation, cameraPermission]);
+
+    useEffect(() => {
+        if (cameraPermission === RESULTS.GRANTED) {
+            remountCamera();
+        }
+    }, [cameraPermission])
+
+
+    useEffect(() => {
         // automatically added scanned barcode to transaction page
         if (barcode) {
             if (params?.autoAddTransaction) {
@@ -48,10 +87,43 @@ export default function Camera(props) {
         }
     }, [barcode])
 
+    async function getCameraPermission() {
+        try {
+            const res = await check(Platform.select({
+                'ios': PERMISSIONS.IOS.CAMERA,
+                default: PERMISSIONS.ANDROID.CAMERA
+            }));
+            return res
+        } catch (error) {
+            return RESULTS.DENIED
+        }
+    }
+
+
+    function remountCamera() {
+        /* forces remounting camera in events when required 
+        *for example after allowing camera permission
+        */
+        if (isMounted) {
+            setIsMounted(false);
+            setTimeout(() => {
+                setIsMounted(true)
+            }, 150)
+        } else {
+            setIsMounted(true);
+        }
+    }
+
 
     function confirmImage() {
         setSelectedFile(image);
+        setIsOverlayVisible(false);
         navigation.goBack();
+    }
+
+    function retakeImage() {
+        setSelectedFile(null);
+        setIsOverlayVisible(false);
     }
 
     function closeModal() {
@@ -127,7 +199,7 @@ export default function Camera(props) {
     const actionName = !traReceipt ? i18n.t('Process Receipt') : i18n.t('Save Receipt for {currency}{amount}', { currency: loggedUser.currency || 'XYZ', amount: utils.formatNumber(_.sumBy(traReceipt, 'amount')) });
     return (
         <>
-            {(!isOverlayVisible && !isModalVisible) ? <CameraScreen
+            {(!isOverlayVisible && !isModalVisible && isMounted) ? <CameraScreen
                 actions={{ rightButtonText: i18n.t('Done'), leftButtonText: i18n.t('Cancel') }}
                 onBottomButtonPressed={(event) => {
                     if (event.type === 'left') {
@@ -160,10 +232,16 @@ export default function Camera(props) {
                 laserColor={colors.primary} // (default red) optional, color of laser in scanner frame
                 frameColor={colors.primary} // (default white) optional, color of border of scanner frame
             // surfaceColor={colors.primary}
-            /> : <View style={style.root} />}
+            /> : <View style={style.root}>
+                <View style={style.cameraInitialize}>
+                    <Text>{i18n.t('Initializing camera')}...</Text>
+                </View>
+            </View>}
             <Overlay
                 fullScreen
-                isVisible={isOverlayVisible}>
+                isVisible={isOverlayVisible}
+                onBackdropPress={retakeImage}
+            >
                 {!!image && <FastImage
                     source={image}
                     style={{
@@ -175,8 +253,19 @@ export default function Camera(props) {
                     resizeMode={'contain'}
                 />}
                 <View style={style.imageOptions}>
-                    <Button title={i18n.t("Retake")} type='clear' />
-                    <Button title={i18n.t("Confirm")} type='solid' onPress={confirmImage} />
+                    <Button
+                        title={i18n.t("Retake")}
+                        type='clear'
+                        icon='repeat'
+                        onPress={retakeImage}
+                    />
+                    <Button
+                        title={i18n.t("Confirm")}
+                        type='solid'
+                        onPress={confirmImage}
+                        textColor={colors.white}
+                        icon='content-save-outline'
+                    />
                 </View>
             </Overlay>
             <Modal
@@ -246,6 +335,11 @@ const style = StyleSheet.create({
     root: {
         flex: 1,
         backgroundColor: colors.white,
+    },
+    cameraInitialize: {
+        alignItems: 'center',
+        alignSelf: 'center',
+        paddingTop: 0.65 * height
     },
     imageOptions: { flexDirection: 'row', justifyContent: 'space-between' },
     white: { color: colors.white },
