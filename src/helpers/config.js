@@ -5,7 +5,7 @@ export const MIN_LOAN_DURATION = 60;
 export const DISABLED_ADS = true;
 export const appName = 'Jeje';
 export const appID = 'app.jeje'; //TODO: set different ids for android and ios
-export const FirebaseWebApiKey = 'AIzaSyDp-jvPx0af0gjhMh9vbqnXkzyGh_qXsEM';
+export const FirebaseWebApiKey = env.process.FIREBASE_KEY;
 export const firebaseDynamicLinkPrefix = 'jeje.page.link';
 
 export const config = {
